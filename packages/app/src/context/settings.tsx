@@ -209,7 +209,7 @@ const defaultSettings: Settings = {
   notifications: {
     agent: true,
     permissions: true,
-    errors: false,
+    errors: true,
   },
   sounds: {
     agentEnabled: true,

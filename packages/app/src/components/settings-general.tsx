@@ -574,49 +574,128 @@ export const SettingsGeneral: Component = () => {
     </div>
   )
 
-  const NotificationsSection = () => (
-    <div class="flex flex-col gap-1">
-      <h3 class="text-14-medium text-text-strong pb-2">{language.t("settings.general.section.notifications")}</h3>
+  const NotificationsSection = () => {
+    const platform = usePlatform()
 
-      <SettingsList>
-        <SettingsRow
-          title={language.t("settings.general.notifications.agent.title")}
-          description={language.t("settings.general.notifications.agent.description")}
-        >
-          <div data-action="settings-notifications-agent">
-            <Switch
-              checked={settings.notifications.agent()}
-              onChange={(checked) => settings.notifications.setAgent(checked)}
-            />
-          </div>
-        </SettingsRow>
+    const [pushState, { refetch }] = createResource(
+      () => platform.platform === "ios",
+      async (isIOS) => {
+        if (!isIOS) return null
+        try {
+          return await platform.getPushState?.()
+        } catch {
+          return null
+        }
+      },
+    )
 
-        <SettingsRow
-          title={language.t("settings.general.notifications.permissions.title")}
-          description={language.t("settings.general.notifications.permissions.description")}
-        >
-          <div data-action="settings-notifications-permissions">
-            <Switch
-              checked={settings.notifications.permissions()}
-              onChange={(checked) => settings.notifications.setPermissions(checked)}
-            />
-          </div>
-        </SettingsRow>
+    const permissionStatus = createMemo(() => {
+      const state = pushState()
+      if (!state) return null
+      const permission = state.permission
+      const allowed = state.allowed ?? false
 
-        <SettingsRow
-          title={language.t("settings.general.notifications.errors.title")}
-          description={language.t("settings.general.notifications.errors.description")}
-        >
-          <div data-action="settings-notifications-errors">
-            <Switch
-              checked={settings.notifications.errors()}
-              onChange={(checked) => settings.notifications.setErrors(checked)}
-            />
-          </div>
-        </SettingsRow>
-      </SettingsList>
-    </div>
-  )
+      if (permission === "authorized")
+        return { text: language.t("settings.general.notifications.status.authorized"), color: "text-green-600" }
+      if (permission === "denied")
+        return { text: language.t("settings.general.notifications.status.denied"), color: "text-red-600" }
+      if (permission === "not-determined")
+        return { text: language.t("settings.general.notifications.status.notDetermined"), color: "text-yellow-600" }
+      return allowed
+        ? { text: language.t("settings.general.notifications.status.authorized"), color: "text-green-600" }
+        : { text: language.t("settings.general.notifications.status.notAuthorized"), color: "text-text-weak" }
+    })
+
+    const handleRequestPermission = async () => {
+      try {
+        await platform.requestPushPermission?.()
+        refetch()
+        showToast({
+          variant: "success",
+          title: language.t("settings.general.notifications.permissionRequested"),
+        })
+      } catch (err) {
+        showToast({
+          variant: "error",
+          title: language.t("common.requestFailed"),
+          description: String(err),
+        })
+      }
+    }
+
+    const handleOpenSettings = () => {
+      platform.openSystemSettings?.()
+    }
+
+    return (
+      <div class="flex flex-col gap-1">
+        <h3 class="text-14-medium text-text-strong pb-2">{language.t("settings.general.section.notifications")}</h3>
+
+        <SettingsList>
+          <Show when={platform.platform === "ios"}>
+            <SettingsRow
+              title={language.t("settings.general.notifications.systemPermission.title")}
+              description={language.t("settings.general.notifications.systemPermission.description")}
+            >
+              <div class="flex items-center gap-2">
+                <Show when={permissionStatus()}>
+                  {(status) => <span class={`text-12-medium ${status().color}`}>{status().text}</span>}
+                </Show>
+                <Show
+                  when={permissionStatus()?.text === language.t("settings.general.notifications.status.notDetermined")}
+                >
+                  <Button size="small" onClick={handleRequestPermission}>
+                    {language.t("settings.general.notifications.requestPermission")}
+                  </Button>
+                </Show>
+                <Show when={permissionStatus()?.text === language.t("settings.general.notifications.status.denied")}>
+                  <Button size="small" onClick={handleOpenSettings}>
+                    {language.t("settings.general.notifications.openSettings")}
+                  </Button>
+                </Show>
+              </div>
+            </SettingsRow>
+          </Show>
+
+          <SettingsRow
+            title={language.t("settings.general.notifications.agent.title")}
+            description={language.t("settings.general.notifications.agent.description")}
+          >
+            <div data-action="settings-notifications-agent">
+              <Switch
+                checked={settings.notifications.agent()}
+                onChange={(checked) => settings.notifications.setAgent(checked)}
+              />
+            </div>
+          </SettingsRow>
+
+          <SettingsRow
+            title={language.t("settings.general.notifications.permissions.title")}
+            description={language.t("settings.general.notifications.permissions.description")}
+          >
+            <div data-action="settings-notifications-permissions">
+              <Switch
+                checked={settings.notifications.permissions()}
+                onChange={(checked) => settings.notifications.setPermissions(checked)}
+              />
+            </div>
+          </SettingsRow>
+
+          <SettingsRow
+            title={language.t("settings.general.notifications.errors.title")}
+            description={language.t("settings.general.notifications.errors.description")}
+          >
+            <div data-action="settings-notifications-errors">
+              <Switch
+                checked={settings.notifications.errors()}
+                onChange={(checked) => settings.notifications.setErrors(checked)}
+              />
+            </div>
+          </SettingsRow>
+        </SettingsList>
+      </div>
+    )
+  }
 
   const SoundsSection = () => (
     <div class="flex flex-col gap-1">

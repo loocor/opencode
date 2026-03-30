@@ -17,8 +17,10 @@ type OpenAttachmentPickerOptions = {
   defaultPath?: string
 }
 type SaveFilePickerOptions = { title?: string; defaultPath?: string }
-type PlatformName = "web" | "desktop"
-type DesktopOS = "macos" | "windows" | "linux"
+type PlatformName = "web" | "desktop" | "ios"
+type DesktopOS = "macos" | "windows" | "linux" | "ios"
+type UpdateInfo = { updateAvailable: boolean; version?: string }
+type PushState = { permission?: string; allowed?: boolean } | null
 
 export type FatalRendererErrorLog = {
   error: string
@@ -121,6 +123,23 @@ type PlatformBase = {
 
   /** Record a fatal renderer error in platform logs (desktop only) */
   recordFatalRendererError?(error: FatalRendererErrorLog): Promise<void>
+
+  /** Haptic feedback (mobile only) */
+  haptic?(style: "light" | "medium" | "heavy" | "success" | "warning" | "error"): void
+
+  /** Share content (mobile only) */
+  share?(data: { text?: string; url?: string }): Promise<boolean>
+
+  /** Get push notification state (iOS only) */
+  getPushState?(): Promise<PushState>
+
+  /** Request push notification permission (iOS only) */
+  requestPushPermission?(): Promise<PushState>
+
+  /** Open system settings (iOS only) */
+  openSystemSettings?(): void
+
+  setNotificationBadge?(count: number): Promise<void>
 }
 
 export type Platform = PlatformBase &
@@ -131,6 +150,7 @@ export type Platform = PlatformBase &
         os?: DesktopOS
         openDirectoryPickerDialog(opts?: OpenDirectoryPickerOptions): Promise<PickerPaths>
       }
+    | { platform: "ios"; os?: "ios" }
   )
 
 export type DisplayBackend = "auto" | "wayland"

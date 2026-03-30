@@ -1,0 +1,5 @@
+# Lint native iOS sources from repo root or this directory:
+#   swiftlint lint packages/ios/OpenCode
+excluded:
+  # Large push bridge: JSON-style keys and size trip default rules; keep lint focused on shell glue.
+  - OpenCode/Bridge/PushBridge.swift

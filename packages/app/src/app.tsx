@@ -275,6 +275,8 @@ declare global {
       setTitlebar?: (theme: { mode: "light" | "dark"; scheme?: "system" | "light" | "dark" }) => Promise<void>
       exportDebugLogs?: () => Promise<string>
     }
+    /** iOS shell: sync window / webview chrome to theme (set from `entry-ios.tsx`) */
+    __OPENCODE_SYNC_SHELL_BG__?: () => void
   }
 }
 

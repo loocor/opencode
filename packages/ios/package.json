@@ -1,0 +1,27 @@
+{
+  "name": "@opencode-ai/ios",
+  "private": true,
+  "version": "1.3.2",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "lint:swift": "swiftlint lint --strict --config OpenCode/.swiftlint.yml OpenCode",
+    "typecheck": "tsgo -b",
+    "dev": "vite",
+    "build": "bun run typecheck && vite build",
+    "preview": "vite preview",
+    "beam": "./script/beam"
+  },
+  "dependencies": {
+    "@opencode-ai/app": "workspace:*",
+    "@opencode-ai/ui": "workspace:*",
+    "@solid-primitives/storage": "catalog:",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "@typescript/native-preview": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  }
+}

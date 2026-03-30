@@ -544,9 +544,9 @@ export function removePersisted(
   if (target.draft && platform?.draftStore) {
     void platform.draftStore.removeItem(`${target.storage ?? "default"}:${target.key}`)
   }
-  const isDesktop = platform?.platform === "desktop" && !!platform.storage
+  const native = platform?.platform !== "web" && !!platform?.storage
 
-  if (isDesktop) {
+  if (native) {
     void platform.storage?.(target.storage)?.removeItem(target.key)
     for (const storage of target.legacyStorageNames ?? []) {
       void platform.storage?.(storage)?.removeItem(target.key)
@@ -576,7 +576,7 @@ export function persisted<T>(
   const defaults = snapshot(store[0])
   const legacy = config.legacy ?? []
 
-  const isDesktop = platform.platform === "desktop" && !!platform.storage
+const native = platform.platform !== "web" && !!platform.storage
   const draft = config.draft ? platform.draftStore : undefined
 
   const currentStorage = (() => {
@@ -588,13 +588,13 @@ export function persisted<T>(
         removeItem: (key: string) => draft.removeItem(prefix + key),
       } satisfies AsyncStorage
     }
-    if (isDesktop) return platform.storage?.(config.storage)
+    if (native) return platform.storage?.(config.storage)
     if (!config.storage) return localStorageDirect()
     return localStorageWithPrefix(config.storage)
   })()
 
   const legacyStorage = (() => {
-    if (!isDesktop) return localStorageDirect()
+    if (!native) return localStorageDirect()
     if (!config.storage) return platform.storage?.()
     return platform.storage?.(LEGACY_STORAGE)
   })()
@@ -602,7 +602,7 @@ export function persisted<T>(
   const legacyStorageNames = config.legacyStorageNames ?? []
 
   const storage = (() => {
-    if (!isDesktop && !draft) {
+    if (!native && !draft) {
       const current = currentStorage as SyncStorage
       const legacyStore = legacyStorage as SyncStorage
       const legacyStores = legacyStorageNames.map(localStorageWithPrefix)
@@ -635,7 +635,7 @@ export function persisted<T>(
     const current = currentStorage as AsyncStorage
     const legacyStore = legacyStorage as AsyncStorage | undefined
     const oldCurrent = draft
-      ? isDesktop
+      ? native
         ? platform.storage?.(config.storage)
         : config.storage
           ? localStorageWithPrefix(config.storage)
@@ -643,7 +643,7 @@ export function persisted<T>(
       : undefined
     const legacyStores = [
       oldCurrent,
-      ...legacyStorageNames.map((name) => (isDesktop ? platform.storage?.(name) : localStorageWithPrefix(name))),
+      ...legacyStorageNames.map((name) => (native ? platform.storage?.(name) : localStorageWithPrefix(name))),
     ]
       .filter((x) => !!x)
       .map(toAsyncStorage)

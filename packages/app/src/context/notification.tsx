@@ -242,6 +242,13 @@ function createServerNotificationState(input: {
 
   const meta = { pruned: false, disposed: false }
 
+  const totalUnseen = createMemo(() => store.list.reduce((sum, item) => sum + (item.viewed ? 0 : 1), 0))
+
+  createEffect(() => {
+    if (!ready()) return
+    void platform.setNotificationBadge?.(totalUnseen())
+  })
+
   const updateUnseen = (scope: "session" | "project", key: string, unseen: Notification[]) => {
     setIndex(scope, "unseen", key, unseen)
     setIndex(scope, "unseenCount", key, unseen.length)

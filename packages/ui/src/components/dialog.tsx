@@ -22,6 +22,9 @@ export function Dialog(props: DialogProps) {
       data-fit={props.fit ? true : undefined}
       data-size={props.size || "normal"}
       data-transition={props.transition ? true : undefined}
+      classList={{
+        [props.class ?? ""]: !!props.class,
+      }}
     >
       <div data-slot="dialog-container">
         <Kobalte.Content
