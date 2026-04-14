@@ -167,6 +167,7 @@ export interface MessageProps {
   message: MessageType
   parts: PartType[]
   actions?: UserActions
+  speech?: SpeechActions
   showAssistantCopyPartID?: string | null
   showReasoningSummaries?: boolean
   useV2Actions?: boolean
@@ -190,9 +191,18 @@ export type UserMessageComment = {
   }
 }
 
+export type SpeechActions = {
+  activePartID?: string
+  text?: string
+  paused?: boolean
+  toggle?: (input: { partID: string; text: string }) => void
+  stop?: (partID: string) => void
+}
+
 export interface MessagePartProps {
   part: PartType
   message: MessageType
+  speech?: SpeechActions
   hideDetails?: boolean
   defaultOpen?: boolean
   toolOpen?: boolean
@@ -344,6 +354,69 @@ function PacedMarkdown(props: { text: string; cacheKey: string; streaming: boole
       <Markdown text={value()} cacheKey={props.cacheKey} streaming={props.streaming} />
     </Show>
   )
+}
+
+function spoken(text: string) {
+  const rows = text.replace(/\r\n?/g, "\n").split("\n")
+  const out: string[] = []
+  let fence = false
+  let marker = ""
+  let block = false
+  let blank = false
+  const push = (value: string) => {
+    if (out.at(-1) === value) return
+    out.push(value)
+  }
+
+  for (const row of rows) {
+    const trimmed = row.trim()
+    const next = trimmed.match(/^(```+|~~~+)/)?.[1]
+    if (next) {
+      if (!fence) push("代码片段已忽略")
+      fence = fence ? next !== marker : true
+      marker = fence ? next : ""
+      block = false
+      blank = false
+      continue
+    }
+    if (fence) continue
+    if (/^( {4}|\t)/.test(row)) {
+      push("代码片段已忽略")
+      block = true
+      blank = false
+      continue
+    }
+    if (block && !row.trim()) {
+      blank = true
+      continue
+    }
+    block = false
+    if (blank) {
+      push("")
+      blank = false
+    }
+    out.push(row)
+  }
+
+  return out
+    .join("\n")
+    .replace(/`[^`\n]+`/g, "代码片段已忽略")
+    .replace(/!\[([^\]]*)\]\([^\)]+\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, "$1")
+    .replace(/^\s{0,3}(?:#{1,6}\s+|>\s?|-\s+|\*\s+|\d+\.\s+)/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim()
+}
+
+function agentName(agent: string | undefined) {
+  if (!agent) return ""
+  return agent.split(" - ")[0]?.trim() ?? agent
+}
+
+function title(text: string | undefined) {
+  if (!text) return ""
+  return text[0]?.toUpperCase() + text.slice(1)
 }
 
 function relativizeProjectPath(path: string, directory?: string) {
@@ -723,6 +796,7 @@ export { partDefaultOpen } from "./part-default-open"
 
 export function AssistantParts(props: {
   messages: AssistantMessage[]
+  speech?: SpeechActions
   showAssistantCopyPartID?: string | null
   turnDurationMs?: number
   useV2Actions?: boolean
@@ -808,6 +882,7 @@ export function AssistantParts(props: {
                       <Part
                         part={item()!}
                         message={message()!}
+                        speech={props.speech}
                         showAssistantCopyPartID={props.showAssistantCopyPartID}
                         turnDurationMs={props.turnDurationMs}
                         useV2Actions={props.useV2Actions}
@@ -952,6 +1027,7 @@ export function Message(props: MessageProps) {
           <AssistantMessageDisplay
             message={assistantMessage() as AssistantMessage}
             parts={props.parts}
+            speech={props.speech}
             showAssistantCopyPartID={props.showAssistantCopyPartID}
             showReasoningSummaries={props.showReasoningSummaries}
             useV2Actions={props.useV2Actions}
@@ -965,6 +1041,7 @@ export function Message(props: MessageProps) {
 export function AssistantMessageDisplay(props: {
   message: AssistantMessage
   parts: PartType[]
+  speech?: SpeechActions
   showAssistantCopyPartID?: string | null
   showReasoningSummaries?: boolean
   useV2Actions?: boolean
@@ -1026,6 +1103,7 @@ export function AssistantMessageDisplay(props: {
                     <Part
                       part={item()!}
                       message={props.message}
+                      speech={props.speech}
                       showAssistantCopyPartID={props.showAssistantCopyPartID}
                       useV2Actions={props.useV2Actions}
                     />
@@ -1228,7 +1306,7 @@ export function UserMessageDisplay(props: {
 
   const metaHead = createMemo(() => {
     const agent = props.message.agent
-    const items = [agent ? agent[0]?.toUpperCase() + agent.slice(1) : "", model()]
+    const items = [title(agent), model()]
     return items.filter((x) => !!x).join("\u00A0\u00B7\u00A0")
   })
 
@@ -1438,6 +1516,7 @@ export function Part(props: MessagePartProps) {
         component={component()}
         part={props.part}
         message={props.message}
+        speech={props.speech}
         hideDetails={props.hideDetails}
         defaultOpen={props.defaultOpen}
         toolOpen={props.toolOpen}
@@ -1691,13 +1770,8 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
 
   const meta = createMemo(() => {
     if (props.message.role !== "assistant") return ""
-    const agent = (props.message as AssistantMessage).agent
-    const items = [
-      agent ? agent[0]?.toUpperCase() + agent.slice(1) : "",
-      model(),
-      duration(),
-      interrupted() ? i18n.t("ui.message.interrupted") : "",
-    ]
+    const agent = agentName((props.message as AssistantMessage).agent)
+    const items = [title(agent), model(), duration(), interrupted() ? i18n.t("ui.message.interrupted") : ""]
     return items.filter((x) => !!x).join(" \u00B7 ")
   })
 
@@ -1728,6 +1802,15 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
     }
   }
 
+  const handleSpeech = (e: MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const partID = part().id
+    const value = spoken(props.speech?.text ?? text())
+    if (!partID || !value) return
+    props.speech?.toggle?.({ partID, text: value })
+  }
+
   return (
     <Show when={text()}>
       <div data-component="text-part" data-timeline-part-id={part().id}>
@@ -1748,6 +1831,36 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
               <span data-slot="text-part-meta" class="text-12-regular text-text-weak cursor-default">
                 {meta()}
               </span>
+            </Show>
+            <Show when={props.message.role === "assistant" && props.speech?.toggle}>
+              <div style={{ "margin-left": "auto", display: "flex", "align-items": "center" }}>
+                <Show when={props.speech?.activePartID === part().id && props.speech?.stop}>
+                  <Tooltip value={i18n.t("ui.message.stopSpeaking")} placement="top" gutter={4}>
+                    <IconButton
+                      icon="stop"
+                      size="normal"
+                      variant="ghost"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => props.speech?.stop?.(part().id)}
+                      aria-label={i18n.t("ui.message.stopSpeaking")}
+                    />
+                  </Tooltip>
+                </Show>
+                <Tooltip
+                  value={props.speech?.activePartID === part().id ? props.speech?.paused ? i18n.t("ui.message.resumeSpeaking") : i18n.t("ui.message.pauseSpeaking") : i18n.t("ui.message.readAloud")}
+                  placement="top"
+                  gutter={4}
+                >
+                    <IconButton
+                      icon={props.speech?.activePartID === part().id ? props.speech?.paused ? "play" : "pause" : "play"}
+                      size="normal"
+                      variant="ghost"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={handleSpeech}
+                    aria-label={props.speech?.activePartID === part().id ? props.speech?.paused ? i18n.t("ui.message.resumeSpeaking") : i18n.t("ui.message.pauseSpeaking") : i18n.t("ui.message.readAloud")}
+                  />
+                </Tooltip>
+              </div>
             </Show>
           </div>
         </Show>

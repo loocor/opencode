@@ -2,7 +2,7 @@
 import { AppBaseProviders, AppInterface, type Platform, PlatformProvider, ServerConnection } from "@opencode-ai/app"
 import { createResource, createSignal, onCleanup, onMount, Show } from "solid-js"
 import { render } from "solid-js/web"
-import pkg from "../package.json"
+import pkg from "../../app/package.json"
 import { bridge } from "./bridge"
 import { createBridgeStorage } from "./ios-storage"
 import { Onboarding } from "./onboarding"
@@ -78,6 +78,28 @@ const App = () => {
       const result = await bridge.sendAsync<boolean>("share", data)
       return result ?? false
     },
+    speak: async (input) => {
+      await bridge.sendAsync("speak", input)
+    },
+    stopSpeaking: async (partID) => {
+      await bridge.sendAsync("stopSpeaking", { partID })
+    },
+    pauseSpeaking: async (partID) => {
+      await bridge.sendAsync("pauseSpeaking", { partID })
+    },
+    resumeSpeaking: async (partID) => {
+      await bridge.sendAsync("resumeSpeaking", { partID })
+    },
+    onSpeechState: (cb) =>
+      bridge.on("speechState", (payload) => {
+        if (!payload || typeof payload !== "object") return
+        const speaking = "speaking" in payload ? payload.speaking : undefined
+        if (typeof speaking !== "boolean") return
+        const paused = "paused" in payload ? payload.paused : undefined
+        if (paused !== undefined && typeof paused !== "boolean") return
+        const partID = "partID" in payload && typeof payload.partID === "string" ? payload.partID : undefined
+        cb({ speaking, paused, partID })
+      }),
     getDefaultServer: async () => {
       const result = await bridge.sendAsync<string | null>("getDefaultServerUrl")
       return result ? ServerConnection.Key.make(result) : null

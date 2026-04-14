@@ -285,12 +285,13 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
      - Keep the action wired to a full reload (`platform.restart()` / equivalent).
      - If upstream refactors the header component, re-locate the iOS-only button into the new structure instead of removing it.
 
-2. Agent picker in prompt input: trim parenthesis text for compact width
-   - What must remain: on iOS, the agent selector label shown in the prompt UI removes the bracketed/parenthesis part (and keeps only the agent name).
-   - Why it matters: the width is intentionally reduced; parentheses + content must not consume horizontal space.
-   - Current touchpoint: `packages/app/src/components/prompt-input.tsx` (`compact()` removes `(...)` content, and the agent select `label()` uses `platform.platform === "ios" ? compact(value) : value`).
+2. Agent picker in prompt input: compact role-style names
+   - What must remain: the bottom prompt agent selector label keeps only the prefix before ` - ` for role-style names.
+   - Example: `Atlas - Plan Executor` must render as `Atlas`.
+   - Why it matters: the control is width-constrained and long role suffixes degrade readability.
+   - Current touchpoint: `packages/app/src/components/prompt-input.tsx` (`agentLabel()` compacts displayed labels and the `Select` `label()` uses it).
    - How to preserve after upstream changes:
-     - Preserve the iOS-only label transformation behavior (exact regex can change, but the rendered result must stay equivalent).
+     - Preserve the display-only label transformation behavior (exact implementation can change, but rendered result must stay equivalent).
      - Keep the transformation limited to the displayed label (do not alter the underlying agent identity/config).
      - If upstream changes how the agent select renders its label, re-apply the iOS-only transformation at the new rendering boundary.
 
@@ -332,10 +333,41 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
      - Preserve the class propagation path from `DialogSettings` into the root dialog wrapper.
      - Do not reintroduce root-shell fullscreen as a workaround.
 
-After any sync, verify the five invariants manually in the running app:
+6. iOS assistant reply footer: native read-aloud controls
+   - What must remain: on iOS, the assistant reply footer shows read-aloud controls at the far right.
+   - What it must do: trigger native iOS speech synthesis for the reply text, with pause/resume/stop stateful control while that reply is active.
+   - Speech text rule: fenced / indented / inline code should not be read verbatim; skipped code must be replaced with `代码片段已忽略`.
+   - Media session rule: Control Center / lock-screen media state should stay synchronized with active speech state.
+   - Current touchpoints:
+     - `packages/ui/src/components/message-part.tsx`
+     - `packages/ui/src/components/session-turn.tsx`
+     - `packages/ui/src/i18n/*.ts`
+     - `packages/app/src/context/platform.tsx`
+     - `packages/app/src/pages/session/message-timeline.tsx`
+     - `packages/ios/src/entry-ios.tsx`
+     - `packages/ios/OpenCode/OpenCode/Bridge/PlatformBridge.swift`
+   - How to preserve after upstream changes:
+     - Keep the controls iOS-only and keep them inside the assistant reply footer action row.
+     - Preserve the prop/bridge wiring from shared UI → app platform → iOS native speech.
+     - Preserve the code-skipping speech sanitization behavior even if upstream refactors message rendering.
+
+7. In-app Settings version mapping
+   - What must remain: the Settings top-right in-app version is sourced from upstream app version data, not a separate iOS-local version.
+   - Current touchpoints:
+     - `packages/app/src/components/dialog-settings.tsx`
+     - `packages/ios/src/entry-ios.tsx`
+     - `packages/app/package.json`
+   - How to preserve after upstream changes:
+     - Keep in-app version mapping tied to `packages/app/package.json` through the iOS entry bridge path.
+     - Do not reintroduce a separate in-app version source under `packages/ios/package.json`.
+
+After any sync, verify the seven invariants manually in the running app:
 
 - open a session on iOS and confirm the reload button exists and reloads
-- open prompt input and confirm the agent selector label is trimmed (parenthesis text removed)
+- open prompt input and confirm role-style labels are trimmed (e.g., `Atlas - Plan Executor` renders as `Atlas`)
 - open settings and confirm tab triggers are horizontal and icon-only on the narrow layout
 - trigger an iOS notification, open or view the related content, and confirm the app icon badge clears correctly
 - open Settings on iOS and confirm the dialog itself is fullscreen while the main shell still respects the top safe area
+- open an assistant reply on iOS, use read-aloud pause/resume/stop controls, confirm mixed Chinese/English prose is spoken, and confirm code snippets are skipped as `代码片段已忽略`
+- while read-aloud is active, open Control Center and confirm playback/pause state is synchronized
+- open iOS Settings dialog and confirm the top-right version matches `packages/app/package.json`

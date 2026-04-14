@@ -105,6 +105,13 @@
       /*   color: var(--icon-selected); */
       /* } */
     }
+    &[data-active="true"]:not(:disabled) {
+      background-color: var(--surface-base-active);
+
+      [data-slot="icon-svg"] {
+        color: var(--icon-strong-base);
+      }
+    }
     &:disabled {
       color: var(--icon-invert-base);
       cursor: not-allowed;

@@ -3,6 +3,7 @@ import {
   type SnapshotFileDiff,
   Message as MessageType,
   Part as PartType,
+  TextPart,
 } from "@opencode-ai/sdk/v2/client"
 import type { FileDiffInfo } from "@opencode-ai/client/promise"
 import type { SessionStatus } from "@opencode-ai/sdk/v2"
@@ -14,7 +15,7 @@ import { getDirectory, getFilename } from "@opencode-ai/core/util/path"
 import { createEffect, createMemo, createSignal, For, on, ParentProps, Show } from "solid-js"
 import { createStore } from "solid-js/store"
 import { Dynamic } from "solid-js/web"
-import { AssistantParts, Message, MessageDivider, PART_MAPPING, type UserActions } from "./message-part"
+import { AssistantParts, Message, MessageDivider, PART_MAPPING, type SpeechActions, type UserActions } from "./message-part"
 import { Card } from "@opencode-ai/ui/card"
 import { Accordion } from "@opencode-ai/ui/accordion"
 import { StickyAccordionHeader } from "@opencode-ai/ui/sticky-accordion-header"
@@ -156,6 +157,7 @@ export function SessionTurn(
     messageID: string
     messages?: MessageType[]
     actions?: UserActions
+    speech?: SpeechActions
     showReasoningSummaries?: boolean
     shellToolDefaultOpen?: boolean
     editToolDefaultOpen?: boolean
@@ -335,6 +337,15 @@ export function SessionTurn(
     if (working()) return null
     return showAssistantCopyPartID() ?? null
   })
+  const assistantSpeechText = createMemo(() => {
+    return assistantMessages()
+      .flatMap((message) =>
+        list(data.store.part?.[message.id], emptyParts)
+          .filter((part): part is TextPart => part?.type === "text" && !!part.text?.trim())
+          .map((part) => part.text.trim()),
+      )
+      .join("\n\n")
+  })
   const turnDurationMs = createMemo(() => {
     const start = message()?.time.created
     if (typeof start !== "number") return undefined
@@ -399,7 +410,7 @@ export function SessionTurn(
               class={props.classes?.container}
             >
               <div data-slot="session-turn-message-content" aria-live="off">
-                <Message message={message()!} parts={parts()} actions={props.actions} />
+                <Message message={message()!} parts={parts()} actions={props.actions} speech={props.speech} />
               </div>
               <Show when={divider()}>
                 <div data-slot="session-turn-compaction">
@@ -410,6 +421,14 @@ export function SessionTurn(
                 <div data-slot="session-turn-assistant-content" aria-hidden={working()}>
                   <AssistantParts
                     messages={assistantMessages()}
+                    speech={
+                      props.speech
+                        ? {
+                            ...props.speech,
+                            text: assistantSpeechText(),
+                          }
+                        : undefined
+                    }
                     showAssistantCopyPartID={assistantCopyPartID()}
                     turnDurationMs={turnDurationMs()}
                     working={working()}

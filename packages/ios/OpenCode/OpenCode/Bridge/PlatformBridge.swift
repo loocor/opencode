@@ -1,9 +1,11 @@
+import AVFoundation
 import Foundation
+import MediaPlayer
 import UIKit
 import WebKit
 
 @MainActor
-final class PlatformBridge {
+final class PlatformBridge: NSObject, AVSpeechSynthesizerDelegate {
   weak var webView: WKWebView?
   var onEvent: ((String, Any?) -> Void)?
 
@@ -11,10 +13,20 @@ final class PlatformBridge {
   private let push = PushBridge.shared
   private let config = ServerConfig()
   private let networkScan = NetworkScanBridge()
+  private let speech = AVSpeechSynthesizer()
   private var activeObserver: NSObjectProtocol?
   private var backgroundObserver: NSObjectProtocol?
+  private var audioObserver: NSObjectProtocol?
+  private var speechPartID: String?
+  private var speechText: String?
+  private var speechActive = false
+  private var speechPaused = false
 
-  init() {
+  override init() {
+    super.init()
+    speech.delegate = self
+    configureAudio()
+    configureRemoteCommands()
     activeObserver = NotificationCenter.default.addObserver(
       forName: UIApplication.didBecomeActiveNotification,
       object: nil,
@@ -38,6 +50,16 @@ final class PlatformBridge {
       }
     }
 
+    audioObserver = NotificationCenter.default.addObserver(
+      forName: AVAudioSession.interruptionNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] note in
+      MainActor.assumeIsolated {
+        self?.handleInterruption(note.userInfo)
+      }
+    }
+
     push.onEvent = { [weak self] type, payload in
       self?.onEvent?(type, payload)
     }
@@ -50,6 +72,13 @@ final class PlatformBridge {
     if let backgroundObserver {
       NotificationCenter.default.removeObserver(backgroundObserver)
     }
+    if let audioObserver {
+      NotificationCenter.default.removeObserver(audioObserver)
+    }
+    let center = MPRemoteCommandCenter.shared()
+    center.playCommand.removeTarget(nil)
+    center.pauseCommand.removeTarget(nil)
+    center.stopCommand.removeTarget(nil)
   }
 
   func webContentDidLoad() {}
@@ -165,6 +194,18 @@ final class PlatformBridge {
       reply(push.consume(), nil)
     case "share":
       reply(share(params: params), nil)
+    case "speak":
+      speak(params: params)
+      reply(nil, nil)
+    case "stopSpeaking":
+      stopSpeaking()
+      reply(nil, nil)
+    case "pauseSpeaking":
+      pauseSpeaking()
+      reply(nil, nil)
+    case "resumeSpeaking":
+      resumeSpeaking()
+      reply(nil, nil)
     case "getDefaultServerUrl":
       reply(config.getDefaultServerUrl(), nil)
     case "setDefaultServerUrl":
@@ -265,5 +306,240 @@ final class PlatformBridge {
     }
 
     return true
+  }
+
+  private func configureAudio() {
+    do {
+      let session = AVAudioSession.sharedInstance()
+      try session.setCategory(.playback, mode: .default, options: [])
+    } catch {
+      print("[OpenCode] Audio session setup failed: \(error.localizedDescription)")
+    }
+  }
+
+  private func setAudio(active: Bool) {
+    do {
+      let session = AVAudioSession.sharedInstance()
+      let options: AVAudioSession.SetActiveOptions = active ? [] : .notifyOthersOnDeactivation
+      try session.setActive(active, options: options)
+    } catch {
+      print("[OpenCode] Audio session activation failed: \(error.localizedDescription)")
+    }
+  }
+
+  private func truncate(_ text: String, limit: Int = 48) -> String {
+    text.count > limit ? String(text.prefix(limit)) : text
+  }
+
+  private func configureRemoteCommands() {
+    let center = MPRemoteCommandCenter.shared()
+    center.playCommand.isEnabled = true
+    center.pauseCommand.isEnabled = true
+    center.stopCommand.isEnabled = true
+    center.playCommand.removeTarget(nil)
+    center.pauseCommand.removeTarget(nil)
+    center.stopCommand.removeTarget(nil)
+    center.playCommand.addTarget { [weak self] _ in
+      guard let self else { return .commandFailed }
+      Task { @MainActor in
+        self.resumeSpeaking()
+      }
+      return .success
+    }
+    center.pauseCommand.addTarget { [weak self] _ in
+      guard let self else { return .commandFailed }
+      Task { @MainActor in
+        self.pauseSpeaking()
+      }
+      return .success
+    }
+    center.stopCommand.addTarget { [weak self] _ in
+      guard let self else { return .commandFailed }
+      Task { @MainActor in
+        self.stopSpeaking()
+      }
+      return .success
+    }
+  }
+
+  private func nowPlaying(_ text: String? = nil) {
+    guard speechActive else {
+      MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+      return
+    }
+
+    let value = text ?? speechText
+    let title = value?
+      .split(separator: "\n")
+      .first
+      .map(String.init)?
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let heading = (title?.isEmpty == false ? title : nil) ?? "OpenCode Read Aloud"
+    let preview = value?
+      .replacingOccurrences(of: "\n", with: " ")
+      .trimmingCharacters(in: .whitespacesAndNewlines)
+
+    var info: [String: Any] = [
+      MPMediaItemPropertyTitle: truncate(heading),
+      MPMediaItemPropertyArtist: "Assistant",
+      MPNowPlayingInfoPropertyElapsedPlaybackTime: 0,
+      MPNowPlayingInfoPropertyMediaType: MPNowPlayingInfoMediaType.audio.rawValue,
+      MPNowPlayingInfoPropertyPlaybackRate: speechPaused ? 0 : 1,
+    ]
+    if let preview, !preview.isEmpty {
+      info[MPMediaItemPropertyAlbumTitle] = truncate(preview)
+    }
+    MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+  }
+
+  private func handleInterruption(_ info: [AnyHashable: Any]?) {
+    guard let value = info?[AVAudioSessionInterruptionTypeKey] as? NSNumber,
+          let type = AVAudioSession.InterruptionType(rawValue: value.uintValue) else { return }
+    if type == .began {
+      emitSpeech()
+      return
+    }
+    guard let value = info?[AVAudioSessionInterruptionOptionKey] as? NSNumber else { return }
+    let options = AVAudioSession.InterruptionOptions(rawValue: value.uintValue)
+    if options.contains(.shouldResume), speechActive, !speechPaused {
+      resumeSpeaking()
+      return
+    }
+    emitSpeech()
+  }
+
+  private func emitSpeech() {
+    var state: [String: Any] = [
+      "speaking": speechActive,
+      "paused": speechPaused,
+    ]
+    if speechActive, let speechPartID {
+      state["partID"] = speechPartID
+    }
+    nowPlaying()
+    onEvent?("speechState", state)
+  }
+
+  private func hasHan(_ text: String) -> Bool {
+    text.unicodeScalars.contains(where: { 0x4E00...0x9FFF ~= $0.value || 0x3400...0x4DBF ~= $0.value })
+  }
+
+  private func voice(_ language: String) -> AVSpeechSynthesisVoice? {
+    if let voice = AVSpeechSynthesisVoice(language: language) {
+      return voice
+    }
+    return Locale.preferredLanguages
+      .compactMap { AVSpeechSynthesisVoice(language: $0) }
+      .first
+  }
+
+  private func voiceForText(_ text: String) -> AVSpeechSynthesisVoice? {
+    if hasHan(text) {
+      return voice("zh-CN") ?? voice("zh-Hans") ?? voice("zh-TW")
+    }
+    return Locale.preferredLanguages
+      .first(where: { !$0.hasPrefix("zh") })
+      .flatMap { voice($0) } ?? voice("en-US")
+  }
+
+  private func speak(params: [String: Any]) {
+    let text = (params["text"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    if text.isEmpty {
+      stopSpeaking()
+      return
+    }
+
+    setAudio(active: true)
+    speech.stopSpeaking(at: .immediate)
+    speechPartID = params["partID"] as? String
+    speechText = text
+    speechActive = true
+    speechPaused = false
+
+    let utterance = AVSpeechUtterance(string: text)
+    utterance.rate = 0.5
+    utterance.pitchMultiplier = 1
+    utterance.volume = 1
+    utterance.voice = voiceForText(text)
+    speech.speak(utterance)
+    nowPlaying(text)
+    emitSpeech()
+  }
+
+  private func stopSpeaking() {
+    speech.stopSpeaking(at: .immediate)
+    speechPartID = nil
+    speechText = nil
+    speechActive = false
+    speechPaused = false
+    setAudio(active: false)
+    nowPlaying()
+    emitSpeech()
+  }
+
+  private func pauseSpeaking() {
+    if speechActive, speech.isSpeaking {
+      speech.pauseSpeaking(at: .word)
+    }
+    if speechActive {
+      speechPaused = true
+    }
+    emitSpeech()
+  }
+
+  private func resumeSpeaking() {
+    if speechActive, speech.isPaused {
+      setAudio(active: true)
+      speech.continueSpeaking()
+    }
+    if speechActive {
+      speechPaused = false
+    }
+    emitSpeech()
+  }
+}
+
+@MainActor
+extension PlatformBridge {
+  nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+    Task { @MainActor in
+      if speech.isSpeaking { return }
+      speechPartID = nil
+      speechText = nil
+      speechActive = false
+      speechPaused = false
+      setAudio(active: false)
+      emitSpeech()
+    }
+  }
+
+  nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+    Task { @MainActor in
+      if speech.isSpeaking || speech.isPaused { return }
+      speechPartID = nil
+      speechText = nil
+      speechActive = false
+      speechPaused = false
+      setAudio(active: false)
+      emitSpeech()
+    }
+  }
+
+  nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didPause utterance: AVSpeechUtterance) {
+    Task { @MainActor in
+      if speechActive {
+        speechPaused = true
+      }
+      emitSpeech()
+    }
+  }
+
+  nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didContinue utterance: AVSpeechUtterance) {
+    Task { @MainActor in
+      if speechActive {
+        speechPaused = false
+      }
+      emitSpeech()
+    }
   }
 }

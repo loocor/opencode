@@ -143,16 +143,17 @@ If this list grows, stop and reconsider whether the change really belongs outsid
 
 ## Must-keep iOS-facing behavior during upstream sync
 
-This fork now has five shared-UI behaviors that must survive any sync from `upstream/dev`.
+This fork now has seven shared-UI behaviors that must survive any sync from `upstream/dev`.
 If upstream refactors the surrounding code, preserve the behavior with the thinnest possible iOS-specific adapter instead of carrying large fork diffs.
 
 1. iOS session header reload button
    - Keep the iOS-only full reload button in the session header.
    - The action must continue to trigger a full app reload via `platform.restart()` or an equivalent full refresh path.
 
-2. iOS prompt agent label compaction
-   - Keep the iOS-only compact label rendering in the prompt agent picker.
-   - Parenthesis content may be removed differently after refactors, but the rendered label must stay short and width-efficient.
+2. Prompt agent label compaction for role-style names
+   - Keep compact label rendering in the bottom prompt agent picker.
+   - For names like `Atlas - Plan Executor`, keep only the prefix (`Atlas`) in the rendered label.
+   - Keep the transformation display-only; do not mutate the underlying agent identity.
 
 3. Narrow-layout settings tabs stay horizontal and icon-only
    - Keep the settings tab row horizontal on narrow/mobile layout.
@@ -167,6 +168,16 @@ If upstream refactors the surrounding code, preserve the behavior with the thinn
    - Keep fullscreen behavior scoped to the Settings dialog only.
    - Do not make the root iOS webview ignore the top safe area just to enlarge Settings.
    - Preserve the iOS fullscreen dialog class path across the shared app and UI wrapper so the dialog fills the screen while the main shell keeps normal safe-area behavior.
+
+6. iOS assistant reply read-aloud controls stay available in the reply footer
+   - Keep the iOS-only read-aloud button in the assistant reply footer.
+   - Keep it wired to native iOS speech synthesis through the bridge layer in `packages/ios`, including pause/resume/stop behavior.
+   - Keep code blocks skipped from the spoken text and replaced with `代码片段已忽略`.
+   - Keep Control Center / lock-screen media state synchronized with speech state when read-aloud is active.
+
+7. In-app Settings version stays mapped to upstream app version
+   - Keep the Settings top-right version text sourced from `packages/app/package.json` via the iOS entry bridge path.
+   - Do not reintroduce a separate in-app version source in `packages/ios/package.json`.
 
 ## Develop
 
@@ -205,7 +216,9 @@ Keep `PRODUCT_BUNDLE_IDENTIFIER`, signing, `MARKETING_VERSION`, and `CURRENT_PRO
 
 ## Versions
 
-- In-app version comes from `packages/ios/package.json`
+- In-app version comes from `packages/app/package.json` via `packages/ios/src/entry-ios.tsx`
 - App icon / Xcode-visible version comes from the Xcode project settings
 
-Keep them in sync when you want one visible version everywhere.
+This keeps the iOS in-app Settings version aligned with upstream OpenCode automatically.
+`packages/ios/package.json` intentionally does not define its own app version.
+Keep the Xcode project settings in sync as well when you want one visible version everywhere.

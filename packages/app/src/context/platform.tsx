@@ -21,6 +21,7 @@ type PlatformName = "web" | "desktop" | "ios"
 type DesktopOS = "macos" | "windows" | "linux" | "ios"
 type UpdateInfo = { updateAvailable: boolean; version?: string }
 type PushState = { permission?: string; allowed?: boolean } | null
+type SpeechState = { speaking: boolean; paused?: boolean; partID?: string }
 
 export type FatalRendererErrorLog = {
   error: string
@@ -129,6 +130,21 @@ type PlatformBase = {
 
   /** Share content (mobile only) */
   share?(data: { text?: string; url?: string }): Promise<boolean>
+
+  /** Speak text aloud (iOS only) */
+  speak?(input: { partID: string; text: string }): Promise<void>
+
+  /** Stop speaking aloud (iOS only) */
+  stopSpeaking?(partID?: string): Promise<void>
+
+  /** Pause speaking aloud (iOS only) */
+  pauseSpeaking?(partID?: string): Promise<void>
+
+  /** Resume speaking aloud (iOS only) */
+  resumeSpeaking?(partID?: string): Promise<void>
+
+  /** Observe speech state changes (iOS only) */
+  onSpeechState?(cb: (state: SpeechState) => void): () => void
 
   /** Get push notification state (iOS only) */
   getPushState?(): Promise<PushState>
