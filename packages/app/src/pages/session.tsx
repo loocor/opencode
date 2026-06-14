@@ -39,7 +39,8 @@ import { Button } from "@opencode-ai/ui/button"
 import { showToast } from "@/utils/toast"
 import { base64Encode, checksum } from "@opencode-ai/core/util/encode"
 import { useLocation, useNavigate, useParams, useSearchParams } from "@solidjs/router"
-import { NewSessionView, SessionHeader } from "@/components/session"
+import { NewSessionView, SessionContextTab, SessionHeader } from "@/components/session"
+import { type MobileSessionTab, visibleMobileSessionTab } from "./session/mobile-tab"
 import { ErrorPage } from "@/pages/error"
 import { CommentsProvider, useComments } from "@/context/comments"
 import { useCommand } from "@/context/command"
@@ -113,7 +114,7 @@ type VcsMode = "git" | "branch"
 
 const sessionViewState = () => ({
   messageId: undefined as string | undefined,
-  mobileTab: "session" as "session" | "changes",
+  mobileTab: "session" as MobileSessionTab,
 })
 
 function isCurrentSessionNotFoundError(error: unknown, sessionID: string | undefined) {
@@ -665,12 +666,23 @@ export default function Page() {
     list.push("turn")
     return list
   })
-  const mobileChanges = createMemo(() => !isDesktop() && store.mobileTab === "changes")
+  const mobileTab = createMemo(() => visibleMobileSessionTab({ selected: store.mobileTab, activeTab: activeTab() }))
+  const mobileChanges = createMemo(() => !isDesktop() && mobileTab() === "changes")
+  const mobileContext = createMemo(() => !isDesktop() && mobileTab() === "context")
+  const setMobileTab = (value: MobileSessionTab) => {
+    setStore("mobileTab", value)
+    if (value === "context") {
+      void tabs().open("context")
+      tabs().setActive("context")
+      return
+    }
+    if (activeTab() === "context" || tabs().all().includes("context")) tabs().close("context")
+  }
   const wantsReview = createMemo(() =>
     isDesktop()
       ? desktopFileTreeOpen() ||
         (desktopReviewOpen() && (activeTab() === "review" || (newSessionDesign() && !!activeFileTab())))
-      : store.mobileTab === "changes",
+      : mobileTab() === "changes",
   )
   const vcsMode = createMemo<VcsMode | undefined>(() => {
     const mode = reviewMode()
@@ -2015,7 +2027,7 @@ export default function Page() {
   useUsageExceededDialogs()
 
   const mobileTabs = (compact = false, bottom = false) => (
-    <Tabs value={store.mobileTab} class="h-auto">
+    <Tabs value={mobileTab()} class="h-auto">
       <Tabs.List
         classList={{
           "!h-9": compact,
@@ -2025,22 +2037,37 @@ export default function Page() {
         <Tabs.Trigger
           value="session"
           classList={{
-            "!w-1/2 !max-w-none": true,
+            "!max-w-none": true,
+            "!w-1/2": activeTab() !== "context",
+            "!w-1/3": activeTab() === "context",
             "!border-b-0 !border-t !border-border-weak-base [&:has([data-selected])]:!border-t-transparent": bottom,
           }}
           classes={{ button: compact ? "w-full !py-2" : "w-full" }}
-          onClick={() => setStore("mobileTab", "session")}
+          onClick={() => setMobileTab("session")}
         >
           {language.t("session.tab.session")}
         </Tabs.Trigger>
         <Tabs.Trigger
-          value="changes"
+          value="context"
           classList={{
-            "!w-1/2 !max-w-none !border-r-0": true,
+            "!w-1/3 !max-w-none": true,
             "!border-b-0 !border-t !border-border-weak-base [&:has([data-selected])]:!border-t-transparent": bottom,
           }}
           classes={{ button: compact ? "w-full !py-2" : "w-full" }}
-          onClick={() => setStore("mobileTab", "changes")}
+          onClick={() => setMobileTab("context")}
+        >
+          {language.t("session.tab.context")}
+        </Tabs.Trigger>
+        <Tabs.Trigger
+          value="changes"
+          classList={{
+            "!max-w-none !border-r-0": true,
+            "!w-1/2": activeTab() !== "context",
+            "!w-1/3": activeTab() === "context",
+            "!border-b-0 !border-t !border-border-weak-base [&:has([data-selected])]:!border-t-transparent": bottom,
+          }}
+          classes={{ button: compact ? "w-full !py-2" : "w-full" }}
+          onClick={() => setMobileTab("changes")}
         >
           {hasReview()
             ? language.t("session.review.filesChanged", { count: reviewCount() })
@@ -2078,6 +2105,11 @@ export default function Page() {
                 loadingClass: "px-4 py-4 text-text-weak",
                 emptyClass: "h-full pb-64 -mt-4 flex flex-col items-center justify-center text-center gap-6",
               })}
+            </div>
+          </Match>
+          <Match when={params.id && mobileContext()}>
+            <div class="relative h-full overflow-hidden">
+              <SessionContextTab />
             </div>
           </Match>
           <Match when={params.id}>
@@ -2128,7 +2160,7 @@ export default function Page() {
         </Switch>
       </div>
 
-      <Show when={(params.id || !newSessionDesign()) && !mobileChanges()}>
+      <Show when={(params.id || !newSessionDesign()) && !mobileChanges() && !mobileContext()}>
         {(_) => {
           const controller = createSessionComposerRegionController({
             state: composer,

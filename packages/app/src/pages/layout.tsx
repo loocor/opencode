@@ -2401,7 +2401,9 @@ export default function LegacyLayout(props: ParentProps) {
             </div>
           </div>
         </div>
-        {import.meta.env.DEV && import.meta.env.VITE_DISABLE_DEBUG_BAR !== "1" && state.debugTools && <DebugBar />}
+        <Show when={platform.platform !== "ios"}>
+          {import.meta.env.DEV && import.meta.env.VITE_DISABLE_DEBUG_BAR !== "1" && state.debugTools && <DebugBar />}
+        </Show>
       </div>
       <TabsInfoPopup />
       <ToastRegion v2={false} />

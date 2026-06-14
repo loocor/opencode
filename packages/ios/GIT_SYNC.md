@@ -267,6 +267,24 @@ When in doubt:
 - prefer one clear fork commit or a small number of focused commits
 - document branch and sync logic here instead of scattering it across root docs
 
+## OpenCode 1.17.x sync note
+
+The `1.17.x` app refactor moved several iOS patch points away from the older
+`1.14.x` targets:
+
+- Settings uses the V2 settings surface in addition to the legacy dialog.
+- Assistant reply rendering now flows through `message-timeline.tsx` and
+  `@opencode-ai/ui/message-part`.
+- The mobile session surface owns the Session / Changes tabs, so iOS context
+  viewing must be handled in the mobile session page, not only in the desktop
+  side panel.
+- The top titlebar and mobile sidebar carry desktop-only affordances that need
+  iOS-specific hiding instead of root-shell layout changes.
+
+When rebasing onto a newer upstream version, first locate the current owner of
+each behavior, then re-apply the invariant at that owner. Do not blindly patch
+the old `1.14.x` file path if the behavior has moved.
+
 ## Must-keep iOS UI patches (Shared-app invariants)
 
 The bullets below are iOS-facing UI behaviors implemented in the shared `packages/app` UI.
@@ -289,7 +307,10 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
    - What must remain: the bottom prompt agent selector label keeps only the prefix before ` - ` for role-style names.
    - Example: `Atlas - Plan Executor` must render as `Atlas`.
    - Why it matters: the control is width-constrained and long role suffixes degrade readability.
-   - Current touchpoint: `packages/app/src/components/prompt-input.tsx` (`agentLabel()` compacts displayed labels and the `Select` `label()` uses it).
+   - Current touchpoints:
+     - `packages/app/src/components/prompt-input.tsx`
+     - `packages/app/src/components/prompt-input/agent-label.ts`
+     - `packages/app/src/components/prompt-input/agent-label.test.ts`
    - How to preserve after upstream changes:
      - Preserve the display-only label transformation behavior (exact implementation can change, but rendered result must stay equivalent).
      - Keep the transformation limited to the displayed label (do not alter the underlying agent identity/config).
@@ -298,8 +319,10 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
 3. Settings dialog tabs: horizontal + icon-only on narrow/mobile layout
    - What must remain: the settings dialog uses horizontal tab triggers (not a vertical list) and the triggers are icon-only to save width on narrow layouts (including iOS webview).
    - Current touchpoints:
-     - `packages/app/src/components/dialog-settings.tsx` (tabs `orientation` switches to `"horizontal"` on mobile and the mobile trigger renders `<Icon />` without text).
-     - `packages/ui/src/components/tabs.css` (settings variant styles for `[data-orientation="horizontal"]`).
+     - `packages/app/src/components/dialog-settings.tsx` (legacy settings path).
+     - `packages/app/src/components/settings-v2/dialog-settings-v2.tsx` (current V2 settings path).
+     - `packages/app/src/components/settings-v2/settings-v2.css` (iOS fullscreen header, reduced padding, and narrow tab styling).
+     - `packages/ui/src/v2/components/dialog-v2.tsx` (must preserve root class propagation for V2 dialogs).
    - How to preserve after upstream changes:
      - Preserve the mobile/narrow orientation decision.
      - Preserve the icon-only trigger rendering (no text labels in the trigger row).
@@ -324,9 +347,10 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
    - What must remain: the Settings dialog itself becomes fullscreen on iOS, while the main shell remains under normal top safe-area constraints.
    - Why it matters: making the root shell fullscreen causes overlap with the iPhone status area / Dynamic Island region and can make top controls hard to tap.
    - Current touchpoints:
-     - `packages/app/src/components/dialog-settings.tsx` (applies the iOS fullscreen dialog class).
-     - `packages/app/src/index.css` (iOS fullscreen dialog rules target the outer dialog, container, and content).
-     - `packages/ui/src/components/dialog.tsx` (must propagate the dialog class to the root `[data-component="dialog"]` wrapper, not only the inner content node).
+     - `packages/app/src/components/dialog-settings.tsx` (legacy settings path).
+     - `packages/app/src/components/settings-v2/dialog-settings-v2.tsx` (current V2 settings path).
+     - `packages/app/src/components/settings-v2/settings-v2.css` (V2 fullscreen and safe-area scoped styles).
+     - `packages/ui/src/v2/components/dialog-v2.tsx` (must propagate the dialog class to the root V2 dialog wrapper).
      - `packages/ios/OpenCode/OpenCode/App/ContentView.swift` (must keep normal top safe-area behavior for the main shell).
    - How to preserve after upstream changes:
      - Keep fullscreen styling scoped to the Settings dialog path only.
@@ -340,10 +364,11 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
    - Media session rule: Control Center / lock-screen media state should stay synchronized with active speech state.
    - Current touchpoints:
      - `packages/ui/src/components/message-part.tsx`
-     - `packages/ui/src/components/session-turn.tsx`
      - `packages/ui/src/i18n/*.ts`
      - `packages/app/src/context/platform.tsx`
      - `packages/app/src/pages/session/message-timeline.tsx`
+     - `packages/app/src/pages/session/message-speech.ts`
+     - `packages/app/src/pages/session/message-speech.test.ts`
      - `packages/ios/src/entry-ios.tsx`
      - `packages/ios/OpenCode/OpenCode/Bridge/PlatformBridge.swift`
    - How to preserve after upstream changes:
@@ -354,14 +379,51 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
 7. In-app Settings version mapping
    - What must remain: the Settings top-right in-app version is sourced from upstream app version data, not a separate iOS-local version.
    - Current touchpoints:
-     - `packages/app/src/components/dialog-settings.tsx`
+     - `packages/app/src/components/dialog-settings.tsx` (legacy settings path).
+     - `packages/app/src/components/settings-v2/dialog-settings-v2.tsx` (current V2 settings path).
      - `packages/ios/src/entry-ios.tsx`
      - `packages/app/package.json`
    - How to preserve after upstream changes:
      - Keep in-app version mapping tied to `packages/app/package.json` through the iOS entry bridge path.
      - Do not reintroduce a separate in-app version source under `packages/ios/package.json`.
 
-After any sync, verify the seven invariants manually in the running app:
+8. Prompt composer toolbar: horizontal scroll instead of compression
+   - What must remain: the bottom prompt toolbar control row scrolls horizontally on narrow iOS screens.
+   - Why it matters: the `+` button, agent picker, model picker, and reasoning-effort picker can exceed iPhone width; shrinking them makes labels and controls unreadable.
+   - Current touchpoint:
+     - `packages/app/src/components/prompt-input.tsx`
+   - How to preserve after upstream changes:
+     - Keep an outer `overflow-x-auto overflow-y-hidden no-scrollbar` wrapper.
+     - Keep an inner `min-w-max` control row.
+     - Keep individual controls `shrink-0`.
+
+9. Mobile session context view
+   - What must remain: tapping the context-usage circle opens a visible Context tab on iPhone.
+   - Why it matters: desktop opens the right side panel, but that panel is intentionally hidden on mobile.
+   - Current touchpoints:
+     - `packages/app/src/components/session-context-usage.tsx` (opens the shared `context` session tab).
+     - `packages/app/src/pages/session.tsx` (mobile Session / Changes / Context tab surface).
+     - `packages/app/src/pages/session/mobile-tab.ts`
+     - `packages/app/src/pages/session/mobile-tab.test.ts`
+   - How to preserve after upstream changes:
+     - Do not make the context button desktop-only.
+     - Keep the shared `context` tab state as the source of truth.
+     - On mobile, render `SessionContextTab` in the main content area when `activeTab() === "context"`.
+     - When three mobile tabs are visible, wrap tab labels in a shrinkable `truncate` container so long labels such as `44 Files Changed` do not overlap adjacent tabs.
+
+10. iOS chrome compaction
+   - What must remain: desktop-only titlebar/sidebar affordances that are not useful on iPhone stay hidden.
+   - Current touchpoints:
+     - `packages/app/src/components/titlebar.tsx`
+     - `packages/app/src/components/titlebar.css`
+     - `packages/app/src/pages/layout.tsx`
+     - `packages/app/src/pages/layout/sidebar-shell.tsx`
+   - How to preserve after upstream changes:
+     - Hide `ChannelIndicator` on `platform.platform === "ios"` and keep the CSS `html[data-platform="ios"]` fallback.
+     - Keep mobile sidebar Help hidden unless it becomes a functional iOS route.
+     - Keep debug/help floating controls removed from the iOS shell unless they are intentionally reintroduced with mobile behavior.
+
+After any sync, verify the ten invariants manually in the running app:
 
 - open a session on iOS and confirm the reload button exists and reloads
 - open prompt input and confirm role-style labels are trimmed (e.g., `Atlas - Plan Executor` renders as `Atlas`)
@@ -371,3 +433,6 @@ After any sync, verify the seven invariants manually in the running app:
 - open an assistant reply on iOS, use read-aloud pause/resume/stop controls, confirm mixed Chinese/English prose is spoken, and confirm code snippets are skipped as `代码片段已忽略`
 - while read-aloud is active, open Control Center and confirm playback/pause state is synchronized
 - open iOS Settings dialog and confirm the top-right version matches `packages/app/package.json`
+- open the iOS prompt composer and confirm the toolbar scrolls horizontally without compressing controls
+- tap the context-usage circle on iPhone and confirm the Context tab opens visibly, then confirm long mobile tab labels truncate cleanly
+- confirm the iOS titlebar has no `DEV` channel badge and the mobile sidebar has no desktop Help entry

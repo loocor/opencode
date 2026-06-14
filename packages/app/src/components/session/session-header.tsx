@@ -120,6 +120,7 @@ const LINUX_APPS = [
 ] as const
 
 const detectOS = (platform: ReturnType<typeof usePlatform>): OS => {
+  if (platform.platform === "ios") return "ios"
   if (platform.platform === "desktop" && platform.os) return platform.os
   if (typeof navigator !== "object") return "unknown"
   const value = navigator.platform || navigator.userAgent
@@ -242,6 +243,8 @@ export function SessionHeader() {
     reviewVisible: isDesktop(),
     reviewOpened: view().reviewPanel.opened(),
     onReviewToggle: () => view().reviewPanel.toggle(),
+    ios: platform.platform === "ios",
+    onReload: reload,
   }))
 
   const selectApp = (app: OpenApp) => {
@@ -279,6 +282,10 @@ export function SessionHeader() {
         })
       })
       .catch((err: unknown) => showRequestError(language, err))
+  }
+
+  const reload = () => {
+    void platform.restart().catch((err: unknown) => showRequestError(language, err))
   }
 
   const [centerMount, setCenterMount] = createSignal<HTMLElement | null>(null)
@@ -461,6 +468,19 @@ export function SessionHeader() {
                       </Button>
                     </TooltipKeybind>
 
+                    <Show when={platform.platform === "ios"}>
+                      <Tooltip placement="bottom" value={language.t("session.header.reload")}>
+                        <Button
+                          variant="ghost"
+                          class="titlebar-icon w-8 h-6 p-0 box-border shrink-0"
+                          onClick={reload}
+                          aria-label={language.t("session.header.reload")}
+                        >
+                          <Icon size="small" name="reset" />
+                        </Button>
+                      </Tooltip>
+                    </Show>
+
                     <div class="hidden md:flex items-center gap-1 shrink-0">
                       <TooltipKeybind
                         title={language.t("command.review.toggle")}
@@ -524,6 +544,8 @@ type SessionHeaderV2ActionsState = {
   reviewVisible: boolean
   reviewOpened: boolean
   onReviewToggle: () => void
+  ios: boolean
+  onReload: () => void
 }
 
 function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
@@ -531,6 +553,23 @@ function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
 
   return (
     <div class="flex items-center gap-2">
+      <Show when={props.state.ios}>
+        <TooltipV2
+          class="shrink-0"
+          placement="bottom"
+          value={language.t("session.header.reload")}
+        >
+          <IconButtonV2
+            type="button"
+            variant="ghost-muted"
+            size="large"
+            class="!w-9 shrink-0"
+            onClick={props.state.onReload}
+            aria-label={language.t("session.header.reload")}
+            icon={<IconV2 name="reset" />}
+          />
+        </TooltipV2>
+      </Show>
       <Show when={props.state.statusVisible}>
         <Tooltip placement="bottom" value={props.state.statusLabel}>
           <StatusPopoverV2 />

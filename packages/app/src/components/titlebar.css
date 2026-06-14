@@ -58,6 +58,10 @@
   }
 }
 
+html[data-platform="ios"] .channel-indicator {
+  display: none;
+}
+
 @supports (animation-timeline: --titlebar-tabs-scroll) and (timeline-scope: --titlebar-tabs-scroll) {
   [data-slot="titlebar-tabs-scroll"] {
     scroll-timeline: --titlebar-tabs-scroll x;

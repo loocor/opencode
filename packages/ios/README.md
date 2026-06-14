@@ -132,18 +132,31 @@ Keep this fork-specific surface small. At the moment the intended shared-app del
 - `utils/persist.ts`
 - `context/global-sync.tsx`
 - `pages/session.tsx`
+- `pages/session/message-timeline.tsx`
+- `pages/session/message-speech.ts`
+- `pages/session/mobile-tab.ts`
 - `components/prompt-input.tsx`
+- `components/prompt-input/agent-label.ts`
 - `components/session-header.tsx`
 - `components/dialog-settings.tsx`
+- `components/settings-v2/dialog-settings-v2.tsx`
+- `components/settings-v2/settings-v2.css`
+- `components/titlebar.tsx`
+- `components/titlebar.css`
+- `pages/layout.tsx`
+- `pages/layout/sidebar-shell.tsx`
 - `index.css`
 - `app.tsx`
 - `packages/ui/src/components/dialog.tsx`
+- `packages/ui/src/v2/components/dialog-v2.tsx`
 
 If this list grows, stop and reconsider whether the change really belongs outside `packages/ios`.
 
+As of the OpenCode `1.17.x` app layout, many iOS adjustments land in the new V2 settings and session timeline surfaces rather than the older `1.14.x` targets. During the next upstream sync, verify the current component names before re-applying a patch by path.
+
 ## Must-keep iOS-facing behavior during upstream sync
 
-This fork now has seven shared-UI behaviors that must survive any sync from `upstream/dev`.
+This fork now has ten shared-UI behaviors that must survive any sync from `upstream/dev`.
 If upstream refactors the surrounding code, preserve the behavior with the thinnest possible iOS-specific adapter instead of carrying large fork diffs.
 
 1. iOS session header reload button
@@ -178,6 +191,21 @@ If upstream refactors the surrounding code, preserve the behavior with the thinn
 7. In-app Settings version stays mapped to upstream app version
    - Keep the Settings top-right version text sourced from `packages/app/package.json` via the iOS entry bridge path.
    - Do not reintroduce a separate in-app version source in `packages/ios/package.json`.
+
+8. Bottom prompt toolbar stays horizontally scrollable on iPhone
+   - Keep the input toolbar control row scrollable horizontally.
+   - The `+` input, agent selector, model selector, and reasoning-effort selector must not shrink into unreadable shapes on narrow screens.
+   - Preserve `shrink-0` behavior for controls and a `min-w-max` inner track.
+
+9. iOS session context tab remains reachable on narrow layout
+   - The header context-usage circle must open a visible context view on iPhone.
+   - Do not route the action only to the desktop side panel; that panel is hidden below the desktop breakpoint.
+   - When Context is open alongside Session and Changes, truncate long tab labels instead of letting them overflow into adjacent tabs.
+
+10. iOS chrome removes desktop-only affordances that waste narrow width
+   - Hide the channel indicator (`DEV`, `BETA`, etc.) in the iOS titlebar.
+   - Hide the desktop Help affordance on the mobile sidebar.
+   - Keep debug/help overlay controls out of the iOS shell unless they become functional on mobile.
 
 ## Develop
 

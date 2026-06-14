@@ -1,7 +1,9 @@
-import { Component, createMemo, createSignal, startTransition } from "solid-js"
+import { Component, createMemo, createSignal, Show, startTransition } from "solid-js"
+import { createMediaQuery } from "@solid-primitives/media"
 import { Dialog } from "@opencode-ai/ui/v2/dialog-v2"
 import { TabsV2 } from "@opencode-ai/ui/v2/tabs-v2"
 import { Icon } from "@opencode-ai/ui/icon"
+import { Button } from "@opencode-ai/ui/button"
 import { useLanguage } from "@/context/language"
 import { usePlatform } from "@/context/platform"
 import { SettingsGeneralV2 } from "./general"
@@ -25,6 +27,8 @@ export const DialogSettings: Component<{
   const layout = useLayout()
   const tabs = useTabs()
   const serverSync = useServerSync()
+  const mobile = createMediaQuery("(max-width: 767px)")
+  const isIOS = platform.platform === "ios"
   const [tab, setTab] = createSignal(props.defaultValue ?? "general")
   const directory = createMemo(() => {
     const route = layout.route()
@@ -42,57 +46,100 @@ export const DialogSettings: Component<{
   }
 
   return (
-    <Dialog size="x-large" variant="settings" class="settings-v2-dialog">
+    <Dialog
+      size="x-large"
+      variant="settings"
+      class={isIOS ? "settings-v2-dialog ios-fullscreen-dialog" : "settings-v2-dialog"}
+    >
+      <Show when={isIOS}>
+        <div class="settings-v2-ios-header">
+          <Button variant="ghost" size="small" onClick={() => dialog.close()} class="text-blue-500 hover:text-blue-600">
+            {language.t("common.done")}
+          </Button>
+          <span class="settings-v2-ios-title">{language.t("settings.title")}</span>
+          <span class="settings-v2-ios-version">v{platform.version}</span>
+        </div>
+      </Show>
       <TabsV2
-        orientation="vertical"
+        orientation={mobile() ? "horizontal" : "vertical"}
         variant="settings"
         value={tab()}
         onChange={(value) => void startTransition(() => setTab(value))}
-        class="settings-v2"
+        class={isIOS ? "settings-v2 settings-v2--ios" : "settings-v2"}
       >
-        <TabsV2.List>
-          <div class="flex flex-col justify-between h-full w-full">
-            <div class="flex flex-col gap-3 w-full">
-              <div class="flex flex-col gap-3">
-                <div class="flex flex-col gap-1.5">
-                  <TabsV2.SectionTitle>{language.t("settings.section.desktop")}</TabsV2.SectionTitle>
-                  <div class="flex flex-col gap-1.5 w-full">
-                    <TabsV2.Trigger value="general">
-                      <Icon name="sliders" />
-                      {language.t("settings.tab.general")}
-                    </TabsV2.Trigger>
-                    <TabsV2.Trigger value="shortcuts">
-                      <Icon name="keyboard" />
-                      {language.t("settings.tab.shortcuts")}
-                    </TabsV2.Trigger>
+        <Show
+          when={!mobile()}
+          fallback={
+            <TabsV2.List>
+              <div class="flex flex-row gap-1 w-full p-3">
+                <TabsV2.Trigger value="general" class="flex-1">
+                  <Icon name="sliders" />
+                  <span class="sr-only">{language.t("settings.tab.general")}</span>
+                </TabsV2.Trigger>
+                <TabsV2.Trigger value="shortcuts" class="flex-1">
+                  <Icon name="keyboard" />
+                  <span class="sr-only">{language.t("settings.tab.shortcuts")}</span>
+                </TabsV2.Trigger>
+                <TabsV2.Trigger value="servers" class="flex-1">
+                  <Icon name="server" />
+                  <span class="sr-only">{language.t("status.popover.tab.servers")}</span>
+                </TabsV2.Trigger>
+                <TabsV2.Trigger value="providers" class="flex-1">
+                  <Icon name="providers" />
+                  <span class="sr-only">{language.t("settings.providers.title")}</span>
+                </TabsV2.Trigger>
+                <TabsV2.Trigger value="models" class="flex-1">
+                  <Icon name="models" />
+                  <span class="sr-only">{language.t("settings.models.title")}</span>
+                </TabsV2.Trigger>
+              </div>
+            </TabsV2.List>
+          }
+        >
+          <TabsV2.List>
+            <div class="flex flex-col justify-between h-full w-full">
+              <div class="flex flex-col gap-3 w-full">
+                <div class="flex flex-col gap-3">
+                  <div class="flex flex-col gap-1.5">
+                    <TabsV2.SectionTitle>{language.t("settings.section.desktop")}</TabsV2.SectionTitle>
+                    <div class="flex flex-col gap-1.5 w-full">
+                      <TabsV2.Trigger value="general">
+                        <Icon name="sliders" />
+                        {language.t("settings.tab.general")}
+                      </TabsV2.Trigger>
+                      <TabsV2.Trigger value="shortcuts">
+                        <Icon name="keyboard" />
+                        {language.t("settings.tab.shortcuts")}
+                      </TabsV2.Trigger>
+                    </div>
                   </div>
-                </div>
 
-                <div class="flex flex-col gap-1.5">
-                  <TabsV2.SectionTitle>{language.t("settings.section.server")}</TabsV2.SectionTitle>
-                  <div class="flex flex-col gap-1.5 w-full">
-                    <TabsV2.Trigger value="servers">
-                      <Icon name="server" />
-                      {language.t("status.popover.tab.servers")}
-                    </TabsV2.Trigger>
-                    <TabsV2.Trigger value="providers">
-                      <Icon name="providers" />
-                      {language.t("settings.providers.title")}
-                    </TabsV2.Trigger>
-                    <TabsV2.Trigger value="models">
-                      <Icon name="models" />
-                      {language.t("settings.models.title")}
-                    </TabsV2.Trigger>
+                  <div class="flex flex-col gap-1.5">
+                    <TabsV2.SectionTitle>{language.t("settings.section.server")}</TabsV2.SectionTitle>
+                    <div class="flex flex-col gap-1.5 w-full">
+                      <TabsV2.Trigger value="servers">
+                        <Icon name="server" />
+                        {language.t("status.popover.tab.servers")}
+                      </TabsV2.Trigger>
+                      <TabsV2.Trigger value="providers">
+                        <Icon name="providers" />
+                        {language.t("settings.providers.title")}
+                      </TabsV2.Trigger>
+                      <TabsV2.Trigger value="models">
+                        <Icon name="models" />
+                        {language.t("settings.models.title")}
+                      </TabsV2.Trigger>
+                    </div>
                   </div>
                 </div>
               </div>
+              <div class="settings-v2-nav-footer">
+                <span>{language.t("app.name.desktop")}</span>
+                <span>v{platform.version}</span>
+              </div>
             </div>
-            <div class="settings-v2-nav-footer">
-              <span>{language.t("app.name.desktop")}</span>
-              <span>v{platform.version}</span>
-            </div>
-          </div>
-        </TabsV2.List>
+          </TabsV2.List>
+        </Show>
         <TabsV2.Content value="general" class="settings-v2-panel">
           <SettingsGeneralV2 sessionID={props.sessionID} />
         </TabsV2.Content>
