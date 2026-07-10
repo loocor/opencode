@@ -47,26 +47,26 @@ export const DialogSettings: Component<{ defaultValue?: string }> = (props) => {
           when={!mobile()}
           fallback={
             <Tabs.List>
-              <div class="flex flex-row gap-1 w-full p-2">
-                <Tabs.Trigger value="general" class="flex-1">
+              <div class="flex flex-row gap-1 w-full p-2 overflow-x-auto no-scrollbar">
+                <Tabs.Trigger value="general" class="flex-1 shrink-0">
                   <Icon name="sliders" />
-                  <span class="sr-only">{language.t("settings.tab.general")}</span>
+                  <span class="text-11-medium">{language.t("settings.tab.general")}</span>
                 </Tabs.Trigger>
-                <Tabs.Trigger value="shortcuts" class="flex-1">
+                <Tabs.Trigger value="shortcuts" class="flex-1 shrink-0">
                   <Icon name="keyboard" />
-                  <span class="sr-only">{language.t("settings.tab.shortcuts")}</span>
+                  <span class="text-11-medium">{language.t("settings.tab.shortcuts")}</span>
                 </Tabs.Trigger>
-                <Tabs.Trigger value="servers" class="flex-1">
+                <Tabs.Trigger value="servers" class="flex-1 shrink-0">
                   <Icon name="server" />
-                  <span class="sr-only">{language.t("status.popover.tab.servers")}</span>
+                  <span class="text-11-medium">{language.t("status.popover.tab.servers")}</span>
                 </Tabs.Trigger>
-                <Tabs.Trigger value="providers" class="flex-1">
+                <Tabs.Trigger value="providers" class="flex-1 shrink-0">
                   <Icon name="providers" />
-                  <span class="sr-only">{language.t("settings.providers.title")}</span>
+                  <span class="text-11-medium">{language.t("settings.providers.title")}</span>
                 </Tabs.Trigger>
-                <Tabs.Trigger value="models" class="flex-1">
+                <Tabs.Trigger value="models" class="flex-1 shrink-0">
                   <Icon name="models" />
-                  <span class="sr-only">{language.t("settings.models.title")}</span>
+                  <span class="text-11-medium">{language.t("settings.models.title")}</span>
                 </Tabs.Trigger>
               </div>
             </Tabs.List>

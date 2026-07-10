@@ -235,6 +235,9 @@ export function SessionHeader() {
   const tint = createMemo(() =>
     messageAgentColor(params.id ? sync().data.message[params.id] : undefined, sync().data.agent),
   )
+  const reload = () => {
+    void platform.restart().catch((err: unknown) => showRequestError(language, err))
+  }
   const v2ActionsState = createMemo<SessionHeaderV2ActionsState>(() => ({
     statusVisible: status(),
     statusLabel: language.t("status.popover.trigger"),
@@ -282,10 +285,6 @@ export function SessionHeader() {
         })
       })
       .catch((err: unknown) => showRequestError(language, err))
-  }
-
-  const reload = () => {
-    void platform.restart().catch((err: unknown) => showRequestError(language, err))
   }
 
   const [centerMount, setCenterMount] = createSignal<HTMLElement | null>(null)
