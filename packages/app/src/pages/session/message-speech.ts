@@ -1,5 +1,5 @@
 import type { Platform } from "@/context/platform"
-import type { SpeechActions } from "@opencode-ai/ui/message-part"
+import type { SpeechActions } from "@opencode-ai/session-ui/message-part"
 
 export type MessageSpeechState = {
   speaking: boolean
@@ -20,7 +20,7 @@ export function createMessageSpeechActions(
   return {
     activePartID: state.speaking ? state.partID : undefined,
     paused: state.paused,
-    toggle(input) {
+    toggle(input: { partID: string; text: string }) {
       if (state.speaking && state.partID === input.partID) {
         if (state.paused) {
           void resumeSpeaking(input.partID)
@@ -31,7 +31,7 @@ export function createMessageSpeechActions(
       }
       void speak(input)
     },
-    stop(partID) {
+    stop(partID: string) {
       void stopSpeaking(partID)
     },
   }

@@ -1,4 +1,4 @@
-export type FileManagerOS = "macos" | "windows" | "linux" | "unknown"
+export type FileManagerOS = "macos" | "windows" | "linux" | "ios" | "unknown"
 
 export function fileManagerApp(os: FileManagerOS): {
   label: "session.header.open.finder" | "session.header.open.fileExplorer" | "session.header.open.fileManager"
