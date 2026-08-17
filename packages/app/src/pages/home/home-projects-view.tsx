@@ -156,27 +156,31 @@ export function HomeProjectsView(props: HomeProjectsViewProps) {
 
 export function HomeUtilityNav(props: {
   class?: string
+  horizontal?: boolean
   onOpenSettings: () => void
   onOpenHelp: () => void
   language: ReturnType<typeof useLanguage>
 }) {
+  const labelClass = props.horizontal ? "whitespace-nowrap" : HOME_PROJECT_NAV_LABEL
   return (
-    <div class={`${props.class ?? ""} min-w-0 flex-col gap-1 pr-3`}>
+    <div class={`${props.class ?? ""} min-w-0 gap-1 ${props.horizontal ? "flex-row" : "flex-col pr-3"}`}>
       <HomeProjectNavButton
         type="button"
         class="text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted"
+        classList={{ "flex-1 justify-center": props.horizontal }}
         onClick={props.onOpenSettings}
       >
         <IconV2 name="settings-gear" size="small" />
-        <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.settings")}</span>
+        <span class={labelClass}>{props.language.t("sidebar.settings")}</span>
       </HomeProjectNavButton>
       <HomeProjectNavButton
         type="button"
         class="text-v2-text-text-faint [&>[data-slot=icon-svg]]:text-v2-icon-icon-muted"
+        classList={{ "flex-1 justify-center": props.horizontal }}
         onClick={props.onOpenHelp}
       >
         <IconV2 name="help" size="small" />
-        <span class={HOME_PROJECT_NAV_LABEL}>{props.language.t("sidebar.help")}</span>
+        <span class={labelClass}>{props.language.t("sidebar.help")}</span>
       </HomeProjectNavButton>
     </div>
   )

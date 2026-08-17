@@ -17,12 +17,12 @@ export function NewHome() {
   return (
     <div
       class={`
-        m-2 min-h-0 flex-1 self-stretch overflow-hidden rounded-[10px]
+        m-2 flex min-h-0 flex-1 flex-col self-stretch overflow-hidden rounded-[10px]
         bg-v2-background-bg-base shadow-[var(--v2-elevation-raised)]
       `}
     >
       <ScrollView
-        class="h-full [container-type:size]"
+        class="min-h-0 flex-1 [container-type:size]"
         thumbContainer={scroll.viewport.thumbTrack}
         thumbHoverTarget={scroll.viewport.hoverTarget}
         viewportRef={scroll.viewport.setViewport}
@@ -31,20 +31,21 @@ export function NewHome() {
       >
         <div
           class={`
-            mx-auto grid min-h-full w-full max-w-[1080px] grid-rows-[auto_minmax(0,1fr)_auto] gap-4 px-3
+            mx-auto grid min-h-full w-full max-w-[1080px] grid-rows-[auto_minmax(0,1fr)] gap-4 px-3
             lg:grid-cols-[280px_minmax(0,720px)] lg:grid-rows-1 lg:gap-8 lg:px-6
           `}
         >
           <HomeProjects projects={projects} scroll={scroll} />
           <HomeSessions sessions={sessions} search={search} scroll={scroll} />
-          <HomeUtilityNav
-            class="flex lg:hidden"
-            onOpenSettings={projects.utility.settings}
-            onOpenHelp={projects.utility.help}
-            language={projects.copy.language}
-          />
         </div>
       </ScrollView>
+      <HomeUtilityNav
+        horizontal
+        class="flex shrink-0 bg-v2-background-bg-base px-3 py-1 lg:hidden"
+        onOpenSettings={projects.utility.settings}
+        onOpenHelp={projects.utility.help}
+        language={projects.copy.language}
+      />
     </div>
   )
 }
