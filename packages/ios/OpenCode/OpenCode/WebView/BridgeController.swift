@@ -20,13 +20,14 @@ final class LocalFileSchemeHandler: NSObject, WKURLSchemeHandler {
     // Map the URL path to a local file
     var path = url.path
     if path.isEmpty || path == "/" { path = "/index.html" }
+    let relative = path.hasPrefix("/") ? String(path.dropFirst()) : path
 
-    var fileURL = baseDirectory.appendingPathComponent(path)
+    var fileURL = baseDirectory.appendingPathComponent(relative)
 
     // SPA fallback: if the file doesn't exist and has no extension,
     // it's a client-side route — serve index.html instead
     if !FileManager.default.fileExists(atPath: fileURL.path) && fileURL.pathExtension.isEmpty {
-      fileURL = baseDirectory.appendingPathComponent("/index.html")
+      fileURL = baseDirectory.appendingPathComponent("index.html")
     }
 
     guard let data = try? Data(contentsOf: fileURL) else {
@@ -92,15 +93,13 @@ final class BridgeController: NSObject, WKScriptMessageHandler, WKNavigationDele
     let config = WKWebViewConfiguration()
     config.userContentController = userContent
 
-    // Register custom scheme handler for release builds
-    #if !DEBUG
-    let handler = Self.resolveWebAssets()
-    if let handler {
+    // Simulator Debug can hit the Vite dev server. Physical devices and Release
+    // builds must serve the bundled WebAssets via a custom scheme.
+    if Self.shouldUseBundledAssets, let handler = Self.resolveWebAssets() {
       config.setURLSchemeHandler(handler, forURLScheme: "tauri")
       self.schemeHandler = handler
       print("[OpenCode] Registered tauri:// scheme handler")
     }
-    #endif
 
     return config
   }
@@ -151,7 +150,9 @@ final class BridgeController: NSObject, WKScriptMessageHandler, WKNavigationDele
 
   private func loadStartPage(in webView: WKWebView) {
 #if DEBUG
-    if let url = URL(string: "http://localhost:1421") {
+    // Local Vite only works for Simulator Debug while `bun run --cwd packages/ios dev` is up.
+    if !Self.shouldUseBundledAssets, let url = URL(string: "http://localhost:1421") {
+      print("[OpenCode] Loading Vite dev server: \(url.absoluteString)")
       webView.load(URLRequest(url: url))
       return
     }
@@ -165,12 +166,30 @@ final class BridgeController: NSObject, WKScriptMessageHandler, WKNavigationDele
       return
     }
 
-    // Fallback to file:// (shouldn't reach here in release)
+    // Fallback to file:// if the custom scheme handler was not registered
     if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "WebAssets") {
+      print("[OpenCode] Loading via file:// WebAssets")
       webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
-    } else if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
-      webView.loadFileURL(url, allowingReadAccessTo: Bundle.main.bundleURL)
+      return
     }
+    if let url = Bundle.main.url(forResource: "index", withExtension: "html") {
+      print("[OpenCode] Loading via file:// bundle root")
+      webView.loadFileURL(url, allowingReadAccessTo: Bundle.main.bundleURL)
+      return
+    }
+    print("[OpenCode] ERROR: Unable to locate start page")
+  }
+
+  private static var shouldUseBundledAssets: Bool {
+#if DEBUG
+#if targetEnvironment(simulator)
+    return false
+#else
+    return true
+#endif
+#else
+    return true
+#endif
   }
 
   /// Locate web assets in the bundle and return a scheme handler for them
