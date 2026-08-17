@@ -13,6 +13,7 @@ import { DraftTabItem, TabNavItem } from "@/components/titlebar-tab-nav"
 import { useGlobal, type ServerCtx } from "@/context/global"
 import { useLanguage } from "@/context/language"
 import { useCommand } from "@/context/command"
+import { usePlatform } from "@/context/platform"
 import { useTabs } from "@/context/tabs"
 import { createTabPromptState } from "@/context/prompt"
 import { base64Encode } from "@opencode-ai/core/util/encode"
@@ -20,6 +21,9 @@ import { showToast } from "@/utils/toast"
 import { canStartTabDrag, isTabCloseTarget } from "./titlebar-tab-gesture"
 import { adjacentTabKey, mergeVisibleTabOrder } from "./titlebar-tab-order"
 import type { Session } from "@opencode-ai/sdk/v2"
+
+const tabSlotClass =
+  "relative flex w-40 max-w-40 min-w-28 shrink-0 sm:w-56 sm:max-w-56 sm:min-w-32"
 
 function SessionTabSlot(props: {
   tab: SessionTab
@@ -49,7 +53,7 @@ function SessionTabSlot(props: {
       data-titlebar-tab-slot
       data-tab-key={props.id}
       data-active={props.active()}
-      class="relative flex w-56 min-w-7 max-w-56 flex-shrink"
+      class={tabSlotClass}
     >
       <TabNavItem
         ref={(el) => {
@@ -192,7 +196,7 @@ function DraftTabSlot(props: {
       data-titlebar-tab-slot
       data-tab-key={props.id}
       data-active={props.active()}
-      class="relative flex w-56 min-w-7 max-w-56 flex-shrink"
+      class={tabSlotClass}
     >
       <DraftTabItem
         ref={(el) => {
@@ -221,6 +225,9 @@ export function TitlebarTabStrip(props: {
   const global = useGlobal()
   const language = useLanguage()
   const command = useCommand()
+  const platform = usePlatform()
+  // Touch devices need free horizontal panning; drag-reorder steals the gesture.
+  const allowTabDrag = platform.platform !== "ios"
   let scrollRef!: HTMLDivElement
   let listRef!: HTMLDivElement
   let resizeFrame: number | undefined
@@ -285,22 +292,26 @@ export function TitlebarTabStrip(props: {
   })
 
   return (
-    <div data-slot="titlebar-tabs" class="relative min-w-0">
+    <div data-slot="titlebar-tabs" class="relative min-w-0 flex-1 self-stretch overflow-hidden">
       <div
         data-slot="titlebar-tabs-scroll"
-        class="flex min-w-0 flex-row items-center gap-1.5 overflow-x-auto no-scrollbar [app-region:no-drag]"
+        class="flex h-full min-w-0 max-w-full flex-row items-center gap-1.5 overflow-x-auto overscroll-x-contain touch-pan-x no-scrollbar [app-region:no-drag]"
         ref={scrollRef}
       >
         <DragDropProvider
-          sensors={[
-            PointerSensor.configure({
-              activationConstraints: [new PointerActivationConstraints.Distance({ value: 4 })],
-              preventActivation: (event) =>
-                !canStartTabDrag(event.pointerType) ||
-                isTabCloseTarget(event.target) ||
-                (event.target instanceof Element && !!event.target.closest('[contenteditable="true"]')),
-            }),
-          ]}
+          sensors={
+            allowTabDrag
+              ? [
+                  PointerSensor.configure({
+                    activationConstraints: [new PointerActivationConstraints.Distance({ value: 4 })],
+                    preventActivation: (event) =>
+                      !canStartTabDrag(event.pointerType) ||
+                      isTabCloseTarget(event.target) ||
+                      (event.target instanceof Element && !!event.target.closest('[contenteditable="true"]')),
+                  }),
+                ]
+              : []
+          }
           modifiers={[RestrictToHorizontalAxis, RestrictToElement.configure({ element: () => listRef })]}
           plugins={(defaults) => [
             ...defaults.filter((plugin) => plugin !== Accessibility),
@@ -332,7 +343,7 @@ export function TitlebarTabStrip(props: {
             }
           }}
         >
-          <div data-titlebar-tab-list class="flex w-full min-w-0 flex-row items-center" ref={listRef}>
+          <div data-titlebar-tab-list class="flex w-max min-w-0 flex-row items-center gap-1.5" ref={listRef}>
             <For each={props.tabs}>
               {(tab) => {
                 const id = tabKey(tab)

@@ -360,7 +360,7 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
 
             return (
               <div
-                class="h-full flex-1 overflow-visible flex flex-row items-center gap-1.5 px-2 md:pr-3"
+                class="h-full min-w-0 flex-1 overflow-hidden flex flex-row items-center gap-1.5 px-2 md:pr-3"
                 classList={{
                   "pt-2": !bottom(),
                   "pb-2": bottom(),
@@ -402,7 +402,7 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
                   onOverflowChange={setTabsAreOverflowing}
                   onNavigate={(tab, el) => {
                     tabs.select(tab)
-                    el?.scrollIntoView({ behavior: "instant" })
+                    el?.scrollIntoView({ behavior: "instant", inline: "nearest", block: "nearest" })
                   }}
                   onClose={(tab) => {
                     const index = tabsStore.findIndex((item) => tabKey(item) === tabKey(tab))
@@ -410,27 +410,28 @@ export function Titlebar(props: { update?: TitlebarUpdate; debugTools?: { visibl
                   }}
                   onReorder={(keys) => tabsStoreActions.reorder(keys)}
                 />
-                <TooltipV2
-                  placement="bottom"
-                  value={
-                    <>
-                      {language.t("command.session.new")}
-                      <KeybindV2 keys={newTabTooltipKeybind(command)} variant="neutral" />
-                    </>
-                  }
-                >
-                  <IconButtonV2
-                    type="button"
-                    variant="ghost-muted"
-                    size="large"
-                    class="shrink-0"
-                    icon={<IconV2 name="plus" />}
-                    onClick={openNewTab}
-                    aria-label={language.t("command.session.new")}
-                  />
-                </TooltipV2>
-                <div class="flex-1" />
-                <TitlebarV2Right state={v2RightState()} />
+                <div class="flex shrink-0 items-center gap-1.5">
+                  <TooltipV2
+                    placement="bottom"
+                    value={
+                      <>
+                        {language.t("command.session.new")}
+                        <KeybindV2 keys={newTabTooltipKeybind(command)} variant="neutral" />
+                      </>
+                    }
+                  >
+                    <IconButtonV2
+                      type="button"
+                      variant="ghost-muted"
+                      size="large"
+                      class="shrink-0"
+                      icon={<IconV2 name="plus" />}
+                      onClick={openNewTab}
+                      aria-label={language.t("command.session.new")}
+                    />
+                  </TooltipV2>
+                  <TitlebarV2Right state={v2RightState()} />
+                </div>
               </div>
             )
           }}
