@@ -64,13 +64,15 @@ const App = () => {
     platform: "ios",
     os: "ios",
     version: pkg.version,
-    openLink: (url: string) => bridge.send("openLink", { url }),
-    notify: async (title, description, href) => {
-      await bridge.sendAsync("notify", { title, description, href })
+    openExternal: (url: string) => {
+      void bridge.send("openLink", { url })
     },
-    back: () => window.history.back(),
-    forward: () => window.history.forward(),
-    restart: async () => bridge.send("reload"),
+    notify: async (title, description, _onClick) => {
+      await bridge.sendAsync("notify", { title, description })
+    },
+    restart: async () => {
+      bridge.send("reload")
+    },
     haptic: (style: "light" | "medium" | "heavy" | "success" | "warning" | "error") => {
       bridge.send("haptic", { style })
     },
@@ -189,7 +191,7 @@ const App = () => {
       const link = (event.target as HTMLElement | null)?.closest("a.external-link") as HTMLAnchorElement | null
       if (!link?.href) return
       event.preventDefault()
-      platform.openLink(link.href)
+      platform.openExternal(link.href)
     }
 
     const stopLifecycle = bridge.on("appLifecycle", (payload) => {

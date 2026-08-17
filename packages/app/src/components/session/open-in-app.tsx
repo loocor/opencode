@@ -92,7 +92,7 @@ export const LINUX_OPEN_APPS = [
 ] as const
 
 export function detectOpenAppOS(platform: ReturnType<typeof usePlatform>): OpenAppOS {
-  if (platform.platform === "desktop" && platform.os) return platform.os
+  if (platform.platform === "desktop" && platform.os && platform.os !== "ios") return platform.os
   if (typeof navigator !== "object") return "unknown"
   const value = navigator.platform || navigator.userAgent
   if (/Mac/i.test(value)) return "macos"

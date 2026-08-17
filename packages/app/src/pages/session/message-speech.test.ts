@@ -6,10 +6,8 @@ function speechPlatform(calls: string[]): Platform {
   return {
     platform: "ios",
     os: "ios",
-    openLink() {},
+    openExternal() {},
     restart: async () => {},
-    back() {},
-    forward() {},
     notify: async () => {},
     speak: async (input) => {
       calls.push(`speak:${input.partID}:${input.text}`)
