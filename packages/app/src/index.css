@@ -3,6 +3,89 @@
 @import "@opencode-ai/ui/v2/styles/tailwind.css";
 @import "tw-animate-css";
 
+html[data-platform="ios"] {
+  --font-size-small: 15px;
+  --font-size-base: 15px;
+  --font-size-large: 17px;
+  --font-size-x-large: 21px;
+  font-size: 15px;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html[data-platform="ios"] body,
+html[data-platform="ios"] body * {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html[data-platform="ios"] body,
+html[data-platform="ios"] body.text-\[13px\] {
+  font-size: 15px !important;
+}
+
+html[data-platform="ios"] .text-\[13px\] {
+  font-size: 15px !important;
+}
+
+html[data-platform="ios"] :is(
+  [data-component="button-v2"],
+  [data-component="text-input-v2"] [data-slot="text-input-v2-input"],
+  [data-component="textarea-v2"],
+  [data-component="inline-input-v2"],
+  [data-component="field-v2"],
+  [data-component="menu-v2"],
+  [data-component="select-v2"],
+  [data-component="dialog-v2"],
+  [data-component="accordion-v2"],
+  [data-component="segmented-control-v2"],
+  [data-component="radio-v2"],
+  [data-component="checkbox-v2"],
+  [data-component="toast-v2"],
+  [data-slot="basic-tool-tool-info"],
+  [data-slot="basic-tool-tool-title"],
+  [data-slot="basic-tool-tool-subtitle"],
+  [data-slot="basic-tool-v2-title"],
+  [data-slot="basic-tool-v2-subtitle"],
+  [data-slot="basic-tool-v2-arg"],
+  [data-component="reasoning-part"] [data-component="markdown"],
+  [data-component="home-session-row"],
+  [data-component="home-session-row"] *,
+  [data-component="home-session-search"] input,
+  [data-component="home-project-row"],
+  [data-component="home-project-row"] *
+) {
+  font-size: 15px;
+}
+
+html[data-platform="ios"] [data-slot="titlebar-v2"],
+html[data-platform="ios"] [data-slot="titlebar"],
+html[data-platform="ios"] [data-component="tabs"],
+html[data-platform="ios"] [data-component="tabs-v2"] {
+  --font-size-small: 13px;
+  --font-size-base: 14px;
+  --font-size-large: 16px;
+  --font-size-x-large: 20px;
+}
+
+html[data-platform="ios"] :is([data-slot="titlebar-v2"], [data-slot="titlebar"], [data-component="tabs"], [data-component="tabs-v2"]) :is(.text-\[13px\], [data-component="button-v2"]),
+html[data-platform="ios"] [data-component="tabs-v2"] {
+  font-size: 13px !important;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  html[data-platform="ios"] :is(input, select, textarea, [contenteditable="true"]):not(
+      [type="button"],
+      [type="submit"],
+      [type="checkbox"],
+      [type="radio"],
+      [type="hidden"]
+    ),
+  html[data-platform="ios"] :is(input, textarea)::placeholder {
+    font-size: 15px !important;
+  }
+}
+
 @font-face {
   font-family: "JetBrainsMono Nerd Font Mono";
   src: url("/assets/JetBrainsMonoNerdFontMono-Regular.woff2") format("woff2");
