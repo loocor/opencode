@@ -562,10 +562,10 @@ function SessionHeaderV2Actions(props: { state: SessionHeaderV2ActionsState }) {
             type="button"
             variant="ghost-muted"
             size="large"
-            class="!w-9 shrink-0"
+            class="shrink-0 overflow-visible"
             onClick={props.state.onReload}
             aria-label={language.t("session.header.reload")}
-            icon={<IconV2 name="reset" />}
+            icon={<IconV2 name="reset" class="overflow-visible" />}
           />
         </TooltipV2>
       </Show>
