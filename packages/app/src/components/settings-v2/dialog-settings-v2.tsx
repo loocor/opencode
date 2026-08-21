@@ -71,24 +71,24 @@ export const DialogSettings: Component<{
           when={!mobile()}
           fallback={
             <TabsV2.List>
-              <div class="flex flex-row gap-1 w-full p-3 overflow-x-auto no-scrollbar">
-                <TabsV2.Trigger value="general" class="flex-1 shrink-0">
+              <div class="flex flex-row gap-4 w-full p-3 overflow-x-auto no-scrollbar">
+                <TabsV2.Trigger value="general" class="shrink-0">
                   <Icon name="sliders" />
                   <span class="text-11-medium">{language.t("settings.tab.general")}</span>
                 </TabsV2.Trigger>
-                <TabsV2.Trigger value="shortcuts" class="flex-1 shrink-0">
+                <TabsV2.Trigger value="shortcuts" class="shrink-0">
                   <Icon name="keyboard" />
                   <span class="text-11-medium">{language.t("settings.tab.shortcuts")}</span>
                 </TabsV2.Trigger>
-                <TabsV2.Trigger value="servers" class="flex-1 shrink-0">
+                <TabsV2.Trigger value="servers" class="shrink-0">
                   <Icon name="server" />
                   <span class="text-11-medium">{language.t("status.popover.tab.servers")}</span>
                 </TabsV2.Trigger>
-                <TabsV2.Trigger value="providers" class="flex-1 shrink-0">
+                <TabsV2.Trigger value="providers" class="shrink-0">
                   <Icon name="providers" />
                   <span class="text-11-medium">{language.t("settings.providers.title")}</span>
                 </TabsV2.Trigger>
-                <TabsV2.Trigger value="models" class="flex-1 shrink-0">
+                <TabsV2.Trigger value="models" class="shrink-0">
                   <Icon name="models" />
                   <span class="text-11-medium">{language.t("settings.models.title")}</span>
                 </TabsV2.Trigger>
