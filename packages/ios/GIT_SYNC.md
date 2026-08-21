@@ -420,10 +420,21 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
      - `packages/app/src/pages/layout/sidebar-shell.tsx`
    - How to preserve after upstream changes:
      - Hide `ChannelIndicator` on `platform.platform === "ios"` and keep the CSS `html[data-platform="ios"]` fallback.
-     - Keep mobile sidebar Help hidden unless it becomes a functional iOS route.
-     - Keep debug/help floating controls removed from the iOS shell unless they are intentionally reintroduced with mobile behavior.
+      - Keep mobile sidebar Help hidden unless it becomes a functional iOS route.
+      - Keep debug/help floating controls removed from the iOS shell unless they are intentionally reintroduced with mobile behavior.
 
-After any sync, verify the ten invariants manually in the running app:
+11. Unreachable-server escape hatch
+    - What must remain: the connection-error screen can stop automatic retry, and iOS can leave a dead saved server without force-quitting.
+    - What it must do: the unreachable screen appears immediately during startup health checks (logo + previous server + actions, no splash-only wait). Change server opens the Connect step instantly, hides the stepper, and replaces Back with Home to return to the previous server.
+    - Current touchpoints:
+      - `packages/app/src/app.tsx` (`ConnectionError` / `AppInterface.onChangeServer`)
+      - `packages/ios/src/entry-ios.tsx` (remounts onboarding Connect step; Home returns to the previous server)
+    - How to preserve after upstream changes:
+      - Keep Cancel/Retry on the shared unreachable screen even if upstream restyles it.
+      - Keep an iOS path that unsets the persisted default server and shows onboarding again.
+      - Do not leave iOS with a single unreachable server and no exit besides restart.
+
+After any sync, verify the eleven invariants manually in the running app:
 
 - open a session on iOS and confirm the reload button exists and reloads
 - open prompt input and confirm role-style labels are trimmed (e.g., `Atlas - Plan Executor` renders as `Atlas`)
@@ -436,3 +447,4 @@ After any sync, verify the ten invariants manually in the running app:
 - open the iOS prompt composer and confirm the toolbar scrolls horizontally without compressing controls
 - tap the context-usage circle on iPhone and confirm the Context tab opens visibly, then confirm long mobile tab labels truncate cleanly
 - confirm the iOS titlebar has no `DEV` channel badge and the mobile sidebar has no desktop Help entry
+- with a saved unreachable server, confirm Cancel stops auto-retry, Retry resumes it, and Change server returns to onboarding

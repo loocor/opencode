@@ -156,7 +156,7 @@ As of the OpenCode `1.17.x` app layout, many iOS adjustments land in the new V2 
 
 ## Must-keep iOS-facing behavior during upstream sync
 
-This fork now has ten shared-UI behaviors that must survive any sync from `upstream/dev`.
+This fork now has eleven shared-UI behaviors that must survive any sync from `upstream/dev`.
 If upstream refactors the surrounding code, preserve the behavior with the thinnest possible iOS-specific adapter instead of carrying large fork diffs.
 
 1. iOS session header reload button
@@ -203,9 +203,14 @@ If upstream refactors the surrounding code, preserve the behavior with the thinn
    - When Context is open alongside Session and Changes, truncate long tab labels instead of letting them overflow into adjacent tabs.
 
 10. iOS chrome removes desktop-only affordances that waste narrow width
-   - Hide the channel indicator (`DEV`, `BETA`, etc.) in the iOS titlebar.
-   - Hide the desktop Help affordance on the mobile sidebar.
-   - Keep debug/help overlay controls out of the iOS shell unless they become functional on mobile.
+    - Hide the channel indicator (`DEV`, `BETA`, etc.) in the iOS titlebar.
+    - Hide the desktop Help affordance on the mobile sidebar.
+    - Keep debug/help overlay controls out of the iOS shell unless they become functional on mobile.
+
+11. Unreachable-server screen stays escapable
+    - Keep Cancel to stop automatic retry, and Retry to resume it.
+    - On iOS, keep Change server opening the Connect step immediately, with the stepper hidden and Home returning to the previous server.
+    - Do not leave a single unreachable server with no exit besides restarting the app.
 
 ## Develop
 
