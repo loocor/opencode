@@ -77,6 +77,7 @@ import { observeElementOffsetReconnectAware } from "./observe-element-offset"
 import { createTimelineProjection } from "./projection"
 import { MessageComment, SummaryDiff, TimelineRow, TimelineRowMap } from "./rows"
 import { filterVirtualIndexes } from "./virtual-items"
+import { createMessageSpeechActions, type MessageSpeechState } from "../message-speech"
 
 const emptyMessages: MessageType[] = []
 const emptyParts: PartType[] = []
@@ -272,6 +273,8 @@ export function MessageTimeline(props: {
   const initialMeasurements = cached?.measurements
   const coldBottomMount = !initialMeasurements?.length && props.shouldAnchorBottom()
   const platform = usePlatform()
+  const [speechState, setSpeechState] = createSignal<MessageSpeechState>({ speaking: false })
+  const speech = createMemo(() => createMessageSpeechActions(platform, speechState()))
 
   const [listRoot, setListRoot] = createSignal<HTMLDivElement>()
   const sessionID = createMemo(() => params.id)
@@ -517,6 +520,8 @@ export function MessageTimeline(props: {
         if (props.shouldAnchorBottom()) virtualizer.scrollToEnd()
       })
     })
+    const stop = platform.onSpeechState?.((state) => setSpeechState(state))
+    if (stop) onCleanup(stop)
   })
 
   const maybeAnchorBottom = () => {
@@ -1022,6 +1027,7 @@ export function MessageTimeline(props: {
               <MessagePart
                 part={part()}
                 message={message()}
+                speech={speech()}
                 showAssistantCopyPartID={assistantCopyPartID(row().userMessageID)}
                 turnDurationMs={turnDurationMs(row().userMessageID)}
                 useV2Actions={settings.general.newLayoutDesigns()}
