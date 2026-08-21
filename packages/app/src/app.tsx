@@ -4,6 +4,7 @@ import { I18nProvider } from "@opencode-ai/ui/context"
 import { DialogProvider } from "@opencode-ai/ui/context/dialog"
 import { FileComponentProvider } from "@opencode-ai/ui/context/file"
 import { File } from "@opencode-ai/session-ui/file"
+import { Button } from "@opencode-ai/ui/button"
 import { Font } from "@opencode-ai/ui/font"
 import { Splash } from "@opencode-ai/ui/logo"
 import { ThemeProvider } from "@opencode-ai/ui/theme/context"
@@ -429,7 +430,9 @@ export function AppBaseProviders(
   )
 }
 
-function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean; startup?: Promise<void> }>) {
+function ConnectionGate(
+  props: ParentProps<{ disableHealthCheck?: boolean; startup?: Promise<void>; onChangeServer?: () => void }>,
+) {
   const server = useServer()
   const checkServerHealth = useCheckServerHealth()
 
@@ -468,30 +471,26 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean; start
   const startupChecking = createMemo(
     () => startupHealthCheck.latest === true && ["unresolved", "pending"].includes(startup.state),
   )
-  const loading = createMemo(() => checking() || startupChecking())
+
+  const errorScreen = () => (
+    <ConnectionError
+      onRetry={() => {
+        if (checkMode() === "background") void healthCheckActions.refetch()
+      }}
+      onServerSelected={(key) => {
+        setCheckMode("blocking")
+        server.setActive(key)
+        void healthCheckActions.refetch()
+      }}
+      onChangeServer={props.onChangeServer}
+    />
+  )
 
   return (
     <>
-      <Show when={!checking()}>
-        <Show
-          when={startupHealthCheck.latest}
-          fallback={
-            <ConnectionError
-              onRetry={() => {
-                if (checkMode() === "background") void healthCheckActions.refetch()
-              }}
-              onServerSelected={(key) => {
-                setCheckMode("blocking")
-                server.setActive(key)
-                void healthCheckActions.refetch()
-              }}
-            />
-          }
-        >
-          {props.children}
-        </Show>
-      </Show>
-      <Show when={loading()}>
+      <Show when={!checking() && startupHealthCheck.latest}>{props.children}</Show>
+      <Show when={checking() || startupHealthCheck.latest !== true}>{errorScreen()}</Show>
+      <Show when={startupChecking()}>
         <div class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-background-base">
           <Splash class="w-16 h-20 opacity-50 animate-pulse" />
         </div>
@@ -500,16 +499,24 @@ function ConnectionGate(props: ParentProps<{ disableHealthCheck?: boolean; start
   )
 }
 
-function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key: ServerConnection.Key) => void }) {
+function ConnectionError(props: {
+  onRetry?: () => void
+  onServerSelected?: (key: ServerConnection.Key) => void
+  onChangeServer?: () => void
+}) {
   const language = useLanguage()
   const server = useServer()
   const others = () => server.list.filter((s) => ServerConnection.key(s) !== server.key)
   const name = createMemo(() => server.name || server.key)
   const serverToken = "\u0000server\u0000"
   const unreachable = createMemo(() => language.t("app.server.unreachable", { server: serverToken }).split(serverToken))
+  const [autoRetry, setAutoRetry] = createSignal(true)
 
-  const timer = setInterval(() => props.onRetry?.(), 1000)
-  onCleanup(() => clearInterval(timer))
+  createEffect(() => {
+    if (!autoRetry()) return
+    const timer = setInterval(() => props.onRetry?.(), 1000)
+    onCleanup(() => clearInterval(timer))
+  })
 
   return (
     <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base gap-6 p-6">
@@ -520,7 +527,35 @@ function ConnectionError(props: { onRetry?: () => void; onServerSelected?: (key:
           <span class="text-text-strong font-medium">{name()}</span>
           {unreachable()[1]}
         </p>
-        <p class="mt-1 text-12-regular text-text-weak">{language.t("app.server.retrying")}</p>
+        <Show when={autoRetry()}>
+          <p class="mt-1 text-12-regular text-text-weak">{language.t("app.server.retrying")}</p>
+        </Show>
+      </div>
+      <div class="flex flex-col gap-2 w-full max-w-sm">
+        <Show
+          when={autoRetry()}
+          fallback={
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setAutoRetry(true)
+                props.onRetry?.()
+              }}
+            >
+              {language.t("app.server.retry")}
+            </Button>
+          }
+        >
+          <Button type="button" variant="ghost" onClick={() => setAutoRetry(false)}>
+            {language.t("common.cancel")}
+          </Button>
+        </Show>
+        <Show when={props.onChangeServer}>
+          <Button type="button" variant="secondary" onClick={props.onChangeServer}>
+            {language.t("app.server.changeServer")}
+          </Button>
+        </Show>
       </div>
       <Show when={others().length > 0}>
         <div class="flex flex-col gap-2 w-full max-w-sm">
@@ -565,6 +600,7 @@ export function AppInterface(props: {
   disableHealthCheck?: boolean
   startup?: Promise<void>
   serverScoped?: JSX.Element
+  onChangeServer?: () => void
 }) {
   // The visual new layout lives in the router root so it remains mounted across
   // route changes. Draft and session routes override only their server-bound data
@@ -586,7 +622,11 @@ export function AppInterface(props: {
     >
       <GlobalProvider>
         <SettingsProvider>
-          <ConnectionGate disableHealthCheck={props.disableHealthCheck} startup={props.startup}>
+          <ConnectionGate
+            disableHealthCheck={props.disableHealthCheck}
+            startup={props.startup}
+            onChangeServer={props.onChangeServer}
+          >
             <Show when={useSettings().general.newLayoutDesigns().toString()} keyed>
               <Dynamic
                 component={props.router ?? Router}

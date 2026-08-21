@@ -1,5 +1,6 @@
 // @refresh reload
 import { AppBaseProviders, AppInterface, type Platform, PlatformProvider, ServerConnection } from "@opencode-ai/app"
+import { Splash } from "@opencode-ai/ui/logo"
 import { createResource, createSignal, onCleanup, onMount, Show } from "solid-js"
 import { render } from "solid-js/web"
 import pkg from "../../app/package.json"
@@ -144,6 +145,7 @@ const App = () => {
   })
 
   const [completedConfig, setCompletedConfig] = createSignal<ServerConfig | null>(null)
+  const [changingServer, setChangingServer] = createSignal(false)
 
   const handleOnboardingComplete = async (server: {
     url: string
@@ -160,6 +162,7 @@ const App = () => {
     else await credentialStorage.removeItem("username")
     if (server.password) await credentialStorage.setItem("password", server.password)
     else await credentialStorage.removeItem("password")
+    setChangingServer(false)
     setCompletedConfig({
       url: normalized,
       displayName: server.displayName,
@@ -173,6 +176,11 @@ const App = () => {
         // 忽略错误，用户可能拒绝权限
       })
     }, 500)
+  }
+
+  const handleChangeServer = () => {
+    platform.haptic?.("medium")
+    setChangingServer(true)
   }
 
   onMount(() => {
@@ -225,10 +233,24 @@ const App = () => {
   return (
     <PlatformProvider value={platform}>
       <AppBaseProviders>
-        <Show when={!defaultConfig.loading}>
+        <Show
+          when={!defaultConfig.loading}
+          fallback={
+            <div class="h-dvh w-screen flex flex-col items-center justify-center bg-background-base">
+              <Splash class="w-16 h-20 opacity-50 animate-pulse" />
+            </div>
+          }
+        >
           <Show
-            when={defaultConfig() || completedConfig()}
-            fallback={<Onboarding onComplete={handleOnboardingComplete} />}
+            when={!changingServer() && (completedConfig() ?? defaultConfig())}
+            fallback={
+              <Onboarding
+                onComplete={handleOnboardingComplete}
+                initialStep={changingServer() ? 3 : 0}
+                initialServer={changingServer() ? (completedConfig() ?? defaultConfig() ?? undefined) : undefined}
+                onHome={changingServer() ? () => setChangingServer(false) : undefined}
+              />
+            }
           >
             {(cfg) => {
               const config = cfg()
@@ -242,7 +264,13 @@ const App = () => {
                   password: config.password,
                 },
               }
-              return <AppInterface defaultServer={ServerConnection.key(conn)} servers={[conn]} />
+              return (
+                <AppInterface
+                  defaultServer={ServerConnection.key(conn)}
+                  servers={[conn]}
+                  onChangeServer={handleChangeServer}
+                />
+              )
             }}
           </Show>
         </Show>

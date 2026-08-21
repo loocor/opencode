@@ -12,6 +12,14 @@ interface OnboardingProps {
     username?: string;
     password?: string;
   }) => void;
+  initialStep?: number;
+  initialServer?: {
+    url: string;
+    displayName?: string;
+    username?: string;
+    password?: string;
+  };
+  onHome?: () => void;
 }
 
 type ScanResult = { host: string; port: number; url: string };
@@ -69,14 +77,20 @@ function CopyBlock(props: { code: string }) {
 }
 
 export function Onboarding(props: OnboardingProps) {
-  const [step, setStep] = createSignal(0);
+  const [step, setStep] = createSignal(props.initialStep ?? 0);
   const [scanning, setScanning] = createSignal(false);
   const [servers, setServers] = createSignal<ScanResult[]>([]);
   const [selected, setSelected] = createSignal<string | null>(null);
-  const [manualUrl, setManualUrl] = createSignal("");
-  const [manualName, setManualName] = createSignal("");
-  const [manualUsername, setManualUsername] = createSignal("");
-  const [manualPassword, setManualPassword] = createSignal("");
+  const [manualUrl, setManualUrl] = createSignal(props.initialServer?.url ?? "");
+  const [manualName, setManualName] = createSignal(
+    props.initialServer?.displayName ?? "",
+  );
+  const [manualUsername, setManualUsername] = createSignal(
+    props.initialServer?.username ?? "",
+  );
+  const [manualPassword, setManualPassword] = createSignal(
+    props.initialServer?.password ?? "",
+  );
   const [manualStatus, setManualStatus] = createSignal<boolean | undefined>(
     undefined,
   );
@@ -254,7 +268,9 @@ export function Onboarding(props: OnboardingProps) {
 
       <Show when={step() === 3}>
         <div class="flex flex-col items-center max-w-sm w-full gap-5">
-          <StepIndicator current={3} total={3} />
+          <Show when={!props.onHome}>
+            <StepIndicator current={3} total={3} />
+          </Show>
           <div class="flex flex-col gap-2 text-center">
             <h2 class="text-xl font-semibold text-text-strong">Connect</h2>
             <p class="text-text-weak text-14-regular leading-relaxed">
@@ -385,9 +401,15 @@ export function Onboarding(props: OnboardingProps) {
               variant="secondary"
               size="large"
               class="flex-1"
-              onClick={() => setStep(2)}
+              onClick={() => {
+                if (props.onHome) {
+                  props.onHome();
+                  return;
+                }
+                setStep(2);
+              }}
             >
-              Back
+              {props.onHome ? "Home" : "Back"}
             </Button>
             <Button
               variant="primary"
