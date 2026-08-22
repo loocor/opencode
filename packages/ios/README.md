@@ -156,7 +156,7 @@ As of the OpenCode `1.17.x` app layout, many iOS adjustments land in the new V2 
 
 ## Must-keep iOS-facing behavior during upstream sync
 
-This fork now has eleven shared-UI behaviors that must survive any sync from `upstream/dev`.
+This fork now has seventeen shared-UI behaviors that must survive any sync from `upstream/dev`.
 If upstream refactors the surrounding code, preserve the behavior with the thinnest possible iOS-specific adapter instead of carrying large fork diffs.
 
 1. iOS session header reload button
@@ -211,6 +211,36 @@ If upstream refactors the surrounding code, preserve the behavior with the thinn
     - Keep Cancel to stop automatic retry, and Retry to resume it.
     - On iOS, keep Change server opening the Connect step immediately, with the stepper hidden and Home returning to the previous server.
     - Do not leave a single unreachable server with no exit besides restarting the app.
+
+12. Event stream and health checks pause when the app is hidden
+    - Keep SSE reconnect backoff while visible. Do not give up after a fixed number of failures.
+    - Stop the event stream and slow or pause health polling when the page is hidden or iOS sends `opencode:pause`.
+    - Keep the speech audio session active only while speaking. Pause must not tear down the session or lock-screen controls.
+
+13. iOS home list stays compact and path-copyable
+    - Hide the right-side project name on iOS session rows only.
+    - Keep home project and session row type at 14px.
+    - Keep `--font-size-small` at 13px. Do not remap `.text-[13px]` back to 15px.
+    - Keep Copy project path on the project overflow menu.
+
+14. Mobile session tabs fill the screen width
+    - Session, Context, and Changes together fill the row.
+    - Each tab sizes from its label, then shares leftover width. Do not leave an empty trailing gutter.
+
+15. Images attach, render, and preview on iOS
+    - Keep `image/*` attach, including HEIC conversion.
+    - Render assistant/tool image attachments as thumbs.
+    - Fullscreen preview pinch-zooms from 0.5x to 8x with pan and no rotation.
+
+16. Auto-accept works from Home without a session
+    - Enable the Settings switch from the selected project directory when no session is open.
+    - Do not fall back to `projects.list()[0]`.
+
+17. Session docks share one height budget and stay reachable
+    - Permission and question docks follow the todo-card pattern and the shared `--session-dock-*` budget.
+    - Bind the budget to the live dock node, not a one-shot mount.
+    - Keep the composer mounted on Changes/Context so request docks remain visible.
+    - Timeline auto-scroll stops after a real user gesture and does not treat programmatic scrolls as user scrolls.
 
 ## Develop
 

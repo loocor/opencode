@@ -434,7 +434,74 @@ Prefer upstream code by default, then layer the smallest iOS-only logic on top.
       - Keep an iOS path that unsets the persisted default server and shows onboarding again.
       - Do not leave iOS with a single unreachable server and no exit besides restart.
 
-After any sync, verify the eleven invariants manually in the running app:
+12. Hidden-app event stream and health pause
+    - What must remain: the live event stream backs off while visible and stops when hidden. Health polling also pauses when hidden. iOS `opencode:pause` stops the stream. Speech uses a playback audio session only while speaking; pause must not call `setAudio(false)`.
+    - Why it matters: a fixed give-up count leaves desktop and iOS stuck until a tab switch; tearing down audio on pause kills lock-screen controls.
+    - Current touchpoints:
+      - `packages/app/src/context/server-sdk.tsx`
+      - `packages/app/src/utils/server-health.ts`
+      - `packages/app/src/app.tsx`
+      - `packages/ios/src/entry-ios.tsx`
+      - `packages/ios/OpenCode/OpenCode/Bridge/PlatformBridge.swift`
+      - `packages/ios/OpenCode/OpenCode/WebView/OpenCodeWebView.swift`
+    - How to preserve after upstream changes:
+      - Keep exponential reconnect backoff. Do not reintroduce a hard give-up after N failures.
+      - Keep hidden/background stop plus a visible resume path.
+      - Keep pauseSpeaking from deactivating the audio session.
+
+13. iOS home list type, hidden project names, and copy path
+    - What must remain: iOS session rows hide the trailing project name. Home project and session names stay 14px. `--font-size-small` stays 13px. The project overflow menu can copy the project path.
+    - Current touchpoints:
+      - `packages/app/src/index.css`
+      - `packages/app/src/pages/home/home-sessions-controller.tsx`
+      - `packages/app/src/pages/home/home-projects-view.tsx`
+      - `packages/app/src/pages/home/home-projects-controller.tsx`
+      - `packages/app/src/pages/home/home-projects.tsx`
+    - How to preserve after upstream changes:
+      - Do not restore `html[data-platform="ios"] .text-[13px] { font-size: 15px }`.
+      - Keep the iOS-only project-name hide. Keep Copy project path next to Edit project.
+
+14. Mobile session tabs fill the row
+    - What must remain: Session / Context / Changes fill the screen width. Each tab grows from its label instead of leaving an empty trailing gutter.
+    - Current touchpoint: `packages/app/src/pages/session.tsx` (`mobileTabs`)
+    - How to preserve after upstream changes:
+      - Keep `flex-auto`, hide the tabs `::after` filler, and do not revert to equal `w-1/3` or content-only `w-auto` leftover space.
+
+15. iOS image attach, tool thumbs, and fullscreen preview
+    - What must remain: iOS can attach `image/*` (including HEIC). Assistant/tool image attachments render as thumbs. Preview pinch-zooms 0.5x–8x with pan and no rotation.
+    - Current touchpoints:
+      - `packages/session-ui/src/v2/components/prompt-input/attachments.ts`
+      - `packages/session-ui/src/v2/components/prompt-input/index.tsx`
+      - `packages/session-ui/src/components/message-file.ts`
+      - `packages/session-ui/src/components/message-part.tsx`
+      - `packages/ui/src/components/image-preview.tsx`
+    - How to preserve after upstream changes:
+      - Keep file parts renderable only when they are images.
+      - Do not reintroduce pinch-rotate.
+
+16. Auto-accept from Home without a session
+    - What must remain: Settings Auto-accept can target the selected project directory when no session ID exists.
+    - Current touchpoints:
+      - `packages/app/src/components/settings-v2/general-controllers.ts`
+      - `packages/app/src/components/settings-v2/general.tsx`
+      - `packages/app/src/components/settings-v2/dialog-settings-v2.tsx`
+    - How to preserve after upstream changes:
+      - Keep directory-level toggle when `sessionID` is missing.
+      - Do not fall back to `projects.list()[0]`.
+
+17. Shared session docks and user-scroll follow
+    - What must remain: permission/question docks share the todo-card height budget, stay reachable on Changes/Context, and timeline follow stops after a real user gesture.
+    - Current touchpoints:
+      - `packages/app/src/pages/session/composer/session-dock-budget.ts`
+      - `packages/app/src/pages/session/composer/session-composer-region.tsx`
+      - `packages/session-ui/src/components/dock-prompt.tsx`
+      - `packages/ui/src/hooks/create-auto-scroll.tsx`
+      - `packages/app/src/pages/session/timeline/message-timeline.tsx`
+    - How to preserve after upstream changes:
+      - Bind the dock budget to the live node, not a one-shot `onMount`.
+      - Do not treat programmatic virtualizer scrolls as user scrolls.
+
+After any sync, verify the seventeen invariants manually in the running app:
 
 - open a session on iOS and confirm the reload button exists and reloads
 - open prompt input and confirm role-style labels are trimmed (e.g., `Atlas - Plan Executor` renders as `Atlas`)
@@ -448,3 +515,10 @@ After any sync, verify the eleven invariants manually in the running app:
 - tap the context-usage circle on iPhone and confirm the Context tab opens visibly, then confirm long mobile tab labels truncate cleanly
 - confirm the iOS titlebar has no `DEV` channel badge and the mobile sidebar has no desktop Help entry
 - with a saved unreachable server, confirm Cancel stops auto-retry, Retry resumes it, and Change server returns to onboarding
+- background the app, then return, and confirm the session event stream resumes without a hard give-up
+- pause read-aloud and confirm Control Center can still resume
+- on Home, confirm session rows hide the project name, names are 14px, and Copy project path works
+- open a session and confirm Session / Context / Changes fill the tab row
+- attach an image and open a tool image; confirm thumbs, pinch zoom out to about half width, and no rotation
+- from Home Settings with a selected project, confirm Auto-accept can be toggled
+- trigger a permission or question on Changes and confirm the dock stays visible and height-capped
