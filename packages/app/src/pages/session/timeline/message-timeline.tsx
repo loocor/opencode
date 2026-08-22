@@ -440,8 +440,10 @@ export function MessageTimeline(props: {
       }
     },
     anchorTo: "end",
-    followOnAppend: true,
-    scrollEndThreshold: 80,
+    get followOnAppend() {
+      return props.shouldAnchorBottom()
+    },
+    scrollEndThreshold: 10,
     get scrollMargin() {
       return showHeader() ? 64 : 0
     },
@@ -592,6 +594,7 @@ export function MessageTimeline(props: {
   const handleListTouchStart = (event: TouchEvent) => {
     if (!prependLoading) clearPrependAnchor()
     touchGesture = event.touches[0]?.clientY
+    props.onMarkScrollGesture(event.target)
   }
 
   const handleListTouchMove = (event: TouchEvent & { currentTarget: HTMLDivElement }) => {

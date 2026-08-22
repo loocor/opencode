@@ -888,7 +888,7 @@ export default function Page() {
   let scrollMark = 0
   let messageMark = 0
 
-  const scrollGestureWindowMs = 250
+  const scrollGestureWindowMs = 1500
 
   const markScrollGesture = (target?: EventTarget | null) => {
     const root = scroller
@@ -1527,7 +1527,7 @@ export default function Page() {
   let scrollStateTarget: HTMLDivElement | undefined
   let fillFrame: number | undefined
 
-  const jumpThreshold = (el: HTMLDivElement) => Math.max(400, el.clientHeight)
+  const jumpThreshold = (el: HTMLDivElement) => Math.max(80, el.clientHeight * 0.15)
 
   const updateScrollState = (el: HTMLDivElement) => {
     const max = el.scrollHeight - el.clientHeight

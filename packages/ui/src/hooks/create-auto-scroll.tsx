@@ -110,15 +110,24 @@ export function createAutoScroll(options: AutoScrollOptions) {
     options.onUserInteracted?.()
   }
 
-  const handleWheel = (e: WheelEvent) => {
-    if (e.deltaY >= 0) return
-    // If the user is scrolling within a nested scrollable region (tool output,
-    // code block, etc), don't treat it as leaving the "follow bottom" mode.
-    // Those regions opt in via `data-scrollable`.
+  const fromUser = (target: EventTarget | null) => {
     const el = store.scrollRef
-    const target = e.target instanceof Element ? e.target : undefined
-    const nested = target?.closest("[data-scrollable]")
-    if (el && nested && nested !== el) return
+    const node = target instanceof Element ? target : undefined
+    const nested = node?.closest("[data-scrollable]")
+    return !(el && nested && nested !== el)
+  }
+
+  const handleWheel = (e: WheelEvent) => {
+    if (!fromUser(e.target)) return
+    const el = store.scrollRef
+    if (el && e.deltaY >= 0 && distanceFromBottom(el) < threshold()) return
+    stop()
+  }
+
+  const handlePointer = (e: Event) => {
+    if (!fromUser(e.target)) return
+    const el = store.scrollRef
+    if (el && distanceFromBottom(el) < threshold()) return
     stop()
   }
 
@@ -131,14 +140,10 @@ export function createAutoScroll(options: AutoScrollOptions) {
       return
     }
 
+    if (isAuto(el)) return
+
     if (distanceFromBottom(el) < threshold()) {
       if (store.userScrolled) setStore("userScrolled", false)
-      return
-    }
-
-    // Ignore scroll events triggered by our own scrollToBottom calls.
-    if (!store.userScrolled && isAuto(el)) {
-      scrollToBottom(false)
       return
     }
 
@@ -214,6 +219,8 @@ export function createAutoScroll(options: AutoScrollOptions) {
   })
 
   createEventListener(() => store.scrollRef, "wheel", handleWheel, { passive: true })
+  createEventListener(() => store.scrollRef, "touchstart", handlePointer, { passive: true })
+  createEventListener(() => store.scrollRef, "pointerdown", handlePointer, { passive: true })
 
   onCleanup(() => {
     if (settleTimer) clearTimeout(settleTimer)
