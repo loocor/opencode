@@ -22,29 +22,38 @@ import { createSoundPreviewController, type ShellOption } from "./general-contro
 export { createShellOptions, createSoundPreviewController } from "./general-controller-behavior"
 export type { ShellOption, ShellSelectOption } from "./general-controller-behavior"
 
-export function createPermissionScopeController(sessionID: Accessor<string | undefined>) {
+export function createPermissionScopeController(
+  sessionID: Accessor<string | undefined>,
+  directory: Accessor<string | undefined>,
+) {
   const permission = usePermission()
   const serverSync = useServerSync()
-  const directory = createMemo(() => {
+  const dir = createMemo(() => {
     const id = sessionID()
-    if (!id) return undefined
-    return serverSync().session.lineage.peek(id)?.session.directory
+    if (id) return serverSync().session.lineage.peek(id)?.session.directory ?? directory()
+    return directory()
   })
 
   return {
     accepting: createMemo(() => {
+      const path = dir()
+      if (!path) return false
       const id = sessionID()
-      const dir = directory()
-      if (!id || !dir) return false
-      return permission.isAutoAccepting(id, dir)
+      if (!id) return permission.isAutoAcceptingDirectory(path)
+      return permission.isAutoAccepting(id, path)
     }),
-    enabled: createMemo(() => !!directory()),
+    enabled: createMemo(() => !!dir()),
     set: (checked: boolean) => {
+      const path = dir()
+      if (!path) return
       const id = sessionID()
-      const dir = directory()
-      if (!id || !dir) return
-      if (checked) return permission.enableAutoAccept(id, dir)
-      permission.disableAutoAccept(id, dir)
+      if (!id) {
+        if (permission.isAutoAcceptingDirectory(path) === checked) return
+        permission.toggleAutoAcceptDirectory(path)
+        return
+      }
+      if (checked) return permission.enableAutoAccept(id, path)
+      permission.disableAutoAccept(id, path)
     },
   }
 }
