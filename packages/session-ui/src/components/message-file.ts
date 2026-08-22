@@ -1,6 +1,6 @@
 import { bundledLanguagesInfo } from "shiki"
 import { getFilename } from "@opencode-ai/core/util/path"
-import type { FilePart } from "@opencode-ai/sdk/v2"
+import type { FilePart, ToolPart } from "@opencode-ai/sdk/v2"
 
 export function attached(part: FilePart) {
   return part.url.startsWith("data:") && !inline(part)
@@ -12,6 +12,16 @@ export function inline(part: FilePart) {
 
 export function kind(part: FilePart) {
   return part.mime.startsWith("image/") ? "image" : "file"
+}
+
+export function imageAttachment(part: { mime?: string; url?: string }) {
+  if (!part.url || !part.mime?.startsWith("image/")) return false
+  return part.url.startsWith("data:") || part.url.startsWith("blob:") || /^https?:\/\//.test(part.url)
+}
+
+export function toolImages(state: ToolPart["state"] | undefined) {
+  if (!state || state.status !== "completed") return []
+  return (state.attachments ?? []).filter(imageAttachment)
 }
 
 // language metadata only; grammars stay behind shiki's lazy imports

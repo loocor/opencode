@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import type { FilePart } from "@opencode-ai/sdk/v2"
-import { attached, inline, kind, typeLabel } from "./message-file"
+import { attached, imageAttachment, inline, kind, toolImages, typeLabel } from "./message-file"
 
 function file(part: Partial<FilePart> = {}): FilePart {
   return {
@@ -49,6 +49,28 @@ describe("message-file", () => {
   test("separates image and file attachment kinds", () => {
     expect(kind(file({ mime: "image/png" }))).toBe("image")
     expect(kind(file({ mime: "application/pdf" }))).toBe("file")
+  })
+
+  test("accepts displayable image attachment urls", () => {
+    expect(imageAttachment(file({ mime: "image/png", url: "data:image/png;base64,AA" }))).toBe(true)
+    expect(imageAttachment(file({ mime: "image/png", url: "https://example.com/a.png" }))).toBe(true)
+    expect(imageAttachment(file({ mime: "image/png", url: "file:///tmp/a.png" }))).toBe(false)
+    expect(imageAttachment(file({ mime: "application/pdf", url: "data:application/pdf;base64,AA" }))).toBe(false)
+  })
+
+  test("reads completed tool image attachments", () => {
+    expect(
+      toolImages({
+        status: "completed",
+        input: {},
+        output: "Image read successfully",
+        title: "read",
+        metadata: {},
+        time: { start: 0, end: 1 },
+        attachments: [file({ mime: "image/png", url: "data:image/png;base64,AA" })],
+      }).map((item) => item.url),
+    ).toEqual(["data:image/png;base64,AA"])
+    expect(toolImages({ status: "running", input: {}, time: { start: 0 } })).toEqual([])
   })
 
   test("labels attachment types from the basename extension", () => {

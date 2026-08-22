@@ -1180,8 +1180,10 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       ref={(el) => (fileInputRef = el)}
       type="file"
       multiple
-      accept={ACCEPTED_FILE_TYPES.join(",")}
-      class="hidden"
+      accept={
+        platform.platform === "ios" ? "image/*" : ACCEPTED_FILE_TYPES.join(",")
+      }
+      class="absolute h-px w-px overflow-hidden opacity-0"
       onChange={(e) => {
         const list = e.currentTarget.files
         if (list) void addAttachments(Array.from(list))
@@ -1566,8 +1568,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
               ref={fileInputRef}
               type="file"
               multiple
-              accept={ACCEPTED_FILE_TYPES.join(",")}
-              class="hidden"
+              accept={platform.platform === "ios" ? "image/*" : ACCEPTED_FILE_TYPES.join(",")}
+              class="absolute h-px w-px overflow-hidden opacity-0"
               onChange={(e) => {
                 const list = e.currentTarget.files
                 if (list) void addAttachments(Array.from(list))

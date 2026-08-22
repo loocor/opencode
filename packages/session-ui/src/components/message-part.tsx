@@ -63,7 +63,7 @@ import { ToolStatusTitle } from "./tool-status-title"
 import { patchFiles } from "./apply-patch-file"
 import { partDefaultOpen } from "./part-default-open"
 import { animate } from "motion"
-import { attached, inline, kind, typeLabel } from "./message-file"
+import { attached, imageAttachment, inline, kind, toolImages, typeLabel } from "./message-file"
 import { readPartText } from "./message-part-text"
 import { SessionProgressIndicatorV2 } from "../v2/components/session-progress-indicator-v2"
 
@@ -789,6 +789,7 @@ export function renderable(part: PartType, showReasoningSummaries = true) {
   }
   if (part.type === "text") return !!part.text?.trim()
   if (part.type === "reasoning") return showReasoningSummaries && !!part.text?.trim()
+  if (part.type === "file") return imageAttachment(part)
   return !!PART_MAPPING[part.type]
 }
 
@@ -901,7 +902,7 @@ export function AssistantParts(props: {
 }
 
 function isContextGroupTool(part: PartType): part is ToolPart {
-  return part.type === "tool" && CONTEXT_GROUP_TOOLS.has(part.tool)
+  return part.type === "tool" && CONTEXT_GROUP_TOOLS.has(part.tool) && toolImages(part.state).length === 0
 }
 
 function contextToolDetail(part: ToolPart): string | undefined {
@@ -1706,6 +1707,32 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
             />
           </Match>
         </Switch>
+        <ToolImageAttachments attachments={toolImages(part().state)} />
+      </div>
+    </Show>
+  )
+}
+
+function ToolImageAttachments(props: { attachments: FilePart[] }) {
+  const dialog = useDialog()
+  const i18n = useI18n()
+  return (
+    <Show when={props.attachments.length}>
+      <div data-slot="tool-attachments">
+        <For each={props.attachments}>
+          {(file) => {
+            const name = file.filename ?? i18n.t("ui.message.attachment.alt")
+            return (
+              <button
+                type="button"
+                data-slot="tool-attachment"
+                onClick={() => dialog.show(() => <ImagePreview src={file.url} alt={name} />)}
+              >
+                <img data-slot="tool-attachment-image" src={file.url} alt={name} />
+              </button>
+            )
+          }}
+        </For>
       </div>
     </Show>
   )
@@ -1728,6 +1755,15 @@ export function MessageDivider(props: { label: string }) {
 PART_MAPPING["compaction"] = function CompactionPartDisplay() {
   const i18n = useI18n()
   return <MessageDivider label={i18n.t("ui.messagePart.compaction")} />
+}
+
+PART_MAPPING["file"] = function FilePartDisplay(props) {
+  const file = () => props.part as FilePart
+  return (
+    <Show when={imageAttachment(file())}>
+      <ToolImageAttachments attachments={[file()]} />
+    </Show>
+  )
 }
 
 PART_MAPPING["text"] = function TextPartDisplay(props) {

@@ -17,6 +17,9 @@ const config = {
   FORBID_CONTENTS: ["style", "script"],
   ADD_TAGS: ["svg", "path"],
   ADD_ATTR: ["d", "viewBox", "preserveAspectRatio", "xmlns", "target"],
+  ADD_DATA_URI_TAGS: ["img"],
+  ALLOWED_URI_REGEXP:
+    /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|data|blob):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
 }
 
 if (typeof window !== "undefined" && DOMPurify.isSupported) {

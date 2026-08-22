@@ -724,25 +724,53 @@
   width: 100%;
 }
 
-[data-component="dock-prompt"][data-kind="permission"] {
-  position: relative;
+[data-slot="tool-attachments"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+[data-slot="tool-attachment"] {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: start;
+}
+
+[data-slot="tool-attachment-image"] {
+  display: block;
+  height: 3lh;
+  width: auto;
+  max-width: min(40vw, 12rem);
+  object-fit: contain;
+  object-position: left center;
+  border-radius: 6px;
+  border: 0.5px solid var(--v2-border-border-base);
+  background: var(--v2-background-bg-layer-01);
+}
+
+[data-component="dock-prompt"] {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 0;
-  min-height: 0;
-  max-height: 100dvh;
+  min-height: min-content;
+  max-height: var(--session-dock-max-height, 52dvh);
+  overflow: hidden;
+  border-radius: 12px;
+  border: 0.5px solid var(--v2-border-border-base);
+  background: var(--v2-background-bg-layer-01);
+  margin-bottom: 8px;
+}
 
-  [data-slot="permission-body"] {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    flex: 1;
-    min-height: 0;
-    padding: 12px 12px 0;
-  }
+[data-component="dock-prompt"][data-kind="permission"] {
+  position: relative;
 
   [data-slot="permission-header"] {
-    padding: 0;
+    padding: 12px 12px 0;
   }
 
   [data-slot="permission-row"] {
@@ -779,8 +807,11 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex: 1;
-    min-height: 0;
+    padding: 8px 12px 0;
+    max-height: var(--session-dock-list-max, 36dvh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   [data-slot="permission-hint"] {
@@ -797,11 +828,8 @@
     flex-direction: column;
     gap: 6px;
     margin-top: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
     padding: 1px 0 8px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
 
@@ -819,14 +847,14 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    flex-shrink: 0;
-    padding: 32px 8px 8px;
-    margin-top: -24px;
+    padding: 8px 8px 10px;
   }
 
   [data-slot="permission-footer-actions"] {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 8px;
 
     [data-component="button"] {
@@ -838,27 +866,13 @@
 
 [data-component="dock-prompt"][data-kind="question"] {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-height: 0;
-  max-height: var(--question-prompt-max-height, 100dvh);
-
-  [data-slot="question-body"] {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    flex: 1;
-    min-height: 0;
-    padding: 8px 8px 0;
-  }
 
   [data-slot="question-header"] {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 0 10px;
+    padding: 10px 10px 0;
   }
 
   [data-slot="question-header-title"] {
@@ -924,8 +938,11 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    flex: 1;
     min-height: 0;
+    max-height: var(--session-dock-list-max, 36dvh);
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   [data-slot="question-text"] {
@@ -956,9 +973,7 @@
     gap: 6px;
     margin-top: 12px;
     padding: 1px 1px 16px;
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
+    overflow: hidden;
     scrollbar-width: none;
     -ms-overflow-style: none;
 
@@ -1134,8 +1149,7 @@
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
-    padding: 32px 8px 8px;
-    margin-top: -24px;
+    padding: 8px 8px 10px;
   }
 
   [data-slot="question-footer-actions"] {

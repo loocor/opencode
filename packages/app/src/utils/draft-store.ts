@@ -22,14 +22,32 @@ function blobUrl(id: string, blob: Blob) {
 }
 
 async function blobID(blob: Blob) {
-  const id = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await blob.arrayBuffer())))
+  const subtle = globalThis.crypto?.subtle
+  if (!subtle || (typeof globalThis.isSecureContext === "boolean" && !globalThis.isSecureContext)) {
+    return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`
+  }
+  const id = Array.from(new Uint8Array(await subtle.digest("SHA-256", await blob.arrayBuffer())))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("")
   return id
 }
 
+function fileDataUrl(blob: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener("error", () => reject(reader.error))
+    reader.addEventListener("load", () => {
+      resolve(typeof reader.result === "string" ? reader.result : "")
+    })
+    reader.readAsDataURL(blob)
+  })
+}
+
 export async function createBlobReference(blob: Blob): Promise<BlobReference> {
   const id = await blobID(blob)
+  if (typeof globalThis.isSecureContext === "boolean" && !globalThis.isSecureContext) {
+    return { id, url: await fileDataUrl(blob) }
+  }
   return { id, url: blobUrl(id, blob) }
 }
 
@@ -154,6 +172,9 @@ export function createBrowserDraftStore(): DraftStore {
 }
 
 export async function blobDataUrl(blob: BlobReference, mime: string) {
+  if (blob.url.startsWith("data:")) {
+    return `data:${mime};base64,${blob.url.slice(blob.url.indexOf(",") + 1)}`
+  }
   const data = await fetch(blob.url).then((response) => response.blob())
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader()

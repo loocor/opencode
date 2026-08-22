@@ -98,6 +98,12 @@ export function createPromptInputV2Attachments(
   }
   const add = async (file: File, toast = true, target = capture(), clipboard = false) => {
     if (!target) return false
+    const image = await normalizeImage(file)
+    if (!image) {
+      if (toast) input.warn()
+      return false
+    }
+    file = image
     const mime = await attachmentMime(file)
     if (!mime) {
       if (toast) input.warn()
@@ -219,13 +225,49 @@ export function createPromptInputV2Attachments(
   }
 }
 
-const imageMimes = new Set(["image/png", "image/jpeg", "image/gif", "image/webp"])
+const imageMimes = new Set(["image/png", "image/jpeg", "image/gif", "image/webp", "image/heic", "image/heif"])
 
-async function blobReference(file: File) {
-  const id = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())))
+async function blobID(file: File) {
+  const subtle = globalThis.crypto?.subtle
+  if (!subtle || (typeof globalThis.isSecureContext === "boolean" && !globalThis.isSecureContext)) {
+    return `${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`
+  }
+  return Array.from(new Uint8Array(await subtle.digest("SHA-256", await file.arrayBuffer())))
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("")
-  return { id, url: URL.createObjectURL(file) }
+}
+
+function fileDataUrl(file: Blob) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.addEventListener("error", () => reject(reader.error))
+    reader.addEventListener("load", () => {
+      resolve(typeof reader.result === "string" ? reader.result : "")
+    })
+    reader.readAsDataURL(file)
+  })
+}
+
+async function blobReference(file: File) {
+  return { id: await blobID(file), url: await fileDataUrl(file) }
+}
+
+async function normalizeImage(file: File) {
+  const type = file.type.split(";", 1)[0]?.trim().toLowerCase() ?? ""
+  const heic = type === "image/heic" || type === "image/heif" || /\.hei[cf]$/i.test(file.name)
+  if (!heic) return file
+  const bitmap = await createImageBitmap(file).catch(() => undefined)
+  if (!bitmap) return
+  const canvas = document.createElement("canvas")
+  canvas.width = bitmap.width
+  canvas.height = bitmap.height
+  const ctx = canvas.getContext("2d")
+  if (!ctx) return
+  ctx.drawImage(bitmap, 0, 0)
+  bitmap.close()
+  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.92))
+  if (!blob) return
+  return new File([blob], file.name.replace(/\.hei[cf]$/i, ".jpg"), { type: "image/jpeg" })
 }
 const imageExtensions = new Map([
   ["gif", "image/gif"],
@@ -233,6 +275,8 @@ const imageExtensions = new Map([
   ["jpg", "image/jpeg"],
   ["png", "image/png"],
   ["webp", "image/webp"],
+  ["heic", "image/heic"],
+  ["heif", "image/heif"],
 ])
 const textMimes = new Set([
   "application/json",

@@ -1,4 +1,11 @@
-export const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/gif", "image/webp"]
+export const ACCEPTED_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]
 
 export const ACCEPTED_FILE_TYPES = [
   ...ACCEPTED_IMAGE_TYPES,
@@ -60,6 +67,8 @@ const MIME_EXT = new Map([
   ["image/jpeg", "jpg"],
   ["image/gif", "gif"],
   ["image/webp", "webp"],
+  ["image/heic", "heic"],
+  ["image/heif", "heif"],
   ["application/pdf", "pdf"],
   ["application/json", "json"],
   ["application/ld+json", "jsonld"],

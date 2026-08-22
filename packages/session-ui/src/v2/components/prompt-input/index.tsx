@@ -79,8 +79,12 @@ export function PromptInputV2(props: PromptInputV2Props) {
         ref={props.controller.setFileInput}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/*,application/json,application/ld+json,application/toml,application/x-toml,application/x-yaml,application/xml,application/yaml,.c,.cc,.cjs,.conf,.cpp,.css,.csv,.cts,.env,.go,.gql,.graphql,.h,.hh,.hpp,.htm,.html,.ini,.java,.js,.json,.jsx,.log,.md,.mdx,.mjs,.mts,.py,.rb,.rs,.sass,.scss,.sh,.sql,.toml,.ts,.tsx,.txt,.xml,.yaml,.yml,.zsh"
-        class="hidden"
+        accept={
+          document.documentElement.dataset.platform === "ios"
+            ? "image/*"
+            : "image/png,image/jpeg,image/gif,image/webp,image/heic,image/heif,application/pdf,text/*,application/json,application/ld+json,application/toml,application/x-toml,application/x-yaml,application/xml,application/yaml,.c,.cc,.cjs,.conf,.cpp,.css,.csv,.cts,.env,.go,.gql,.graphql,.h,.hh,.hpp,.htm,.html,.ini,.java,.js,.json,.jsx,.log,.md,.mdx,.mjs,.mts,.py,.rb,.rs,.sass,.scss,.sh,.sql,.toml,.ts,.tsx,.txt,.xml,.yaml,.yml,.zsh"
+        }
+        class="absolute h-px w-px overflow-hidden opacity-0"
         onChange={(event) => {
           const list = event.currentTarget.files
           if (list) props.controller.addAttachments(Array.from(list))
@@ -504,7 +508,17 @@ export function PromptInputV2AddMenu(props: {
         />
         <MenuV2.Portal>
           <MenuV2.Content style={{ "min-width": "180px" }}>
-            <MenuV2.Item onSelect={props.onAttach} shortcut={props.attachShortcut}>
+            <MenuV2.Item
+              onSelect={() => {
+                if (document.documentElement.dataset.platform === "ios") return
+                props.onAttach()
+              }}
+              onPointerDown={() => {
+                if (document.documentElement.dataset.platform !== "ios") return
+                props.onAttach()
+              }}
+              shortcut={props.attachShortcut}
+            >
               {props.attachLabel}
             </MenuV2.Item>
             <MenuV2.Separator />
