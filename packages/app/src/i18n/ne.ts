@@ -688,6 +688,7 @@ export const dict: Record<string, string> = {
   "home.title": "घर",
   "home.projects": "परियोजनाहरू",
   "home.project.add": "परियोजना थप्नुहोस्",
+  "home.project.copyPath": "परियोजना पथ प्रतिलिपि गर्नुहोस्",
   "home.recentlyClosed": "हालै बन्द",
   "home.server.collapse": "सर्भर परियोजनाहरू संक्षिप्त गर्नुहोस्",
   "home.server.expand": "सर्भर परियोजनाहरू विस्तार गर्नुहोस्",

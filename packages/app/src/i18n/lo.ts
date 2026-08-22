@@ -683,6 +683,7 @@ export const dict = {
   "home.title": "ໜ້າຫຼັກ",
   "home.projects": "ໂຄງການ",
   "home.project.add": "ເພີ່ມໂຄງການ",
+  "home.project.copyPath": "ສຳເນົາເສັ້ນທາງໂຄງການ",
   "home.recentlyClosed": "ປິດບໍ່ດົນມານີ້",
   "home.server.collapse": "ຍຸບໂຄງການເຊີບເວີ",
   "home.server.expand": "ຂະຫຍາຍໂຄງການເຊີບເວີ",

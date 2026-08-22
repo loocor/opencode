@@ -30,6 +30,7 @@ export function HomeProjects(props: { projects: HomeProjectsController; scroll: 
       onAddProjects={props.projects.project.add}
       onOpenProjectNewSession={props.projects.project.openNewSession}
       onEditProject={props.projects.project.edit}
+      onCopyProjectPath={props.projects.project.copyPath}
       onRevealProject={props.projects.project.reveal}
       onClearNotifications={props.projects.project.clearNotifications}
       onCloseProject={props.projects.project.close}

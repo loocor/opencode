@@ -696,6 +696,7 @@ export const dict = {
   "home.title": "Ana səhifə",
   "home.projects": "Layihələr",
   "home.project.add": "Layihə əlavə edin",
+  "home.project.copyPath": "Layihə yolunu kopyala",
   "home.recentlyClosed": "Bu yaxınlarda bağlandı",
   "home.server.collapse": "Server layihələrini yığışdırın",
   "home.server.expand": "Server layihələrini genişləndirin",

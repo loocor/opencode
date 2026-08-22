@@ -76,6 +76,16 @@ export function createHomeProjectsController(home: HomeController) {
           void dialog.show(() => <DialogEditProjectV2 server={conn} project={project} />)
         })
       },
+      copyPath: (project: LocalProject) => {
+        const path = project.worktree
+        void writeClipboard(path).then((ok) =>
+          showToast(
+            ok
+              ? { title: language.t("session.share.copy.copied"), description: path, variant: "success" }
+              : { title: language.t("common.requestFailed"), variant: "error" },
+          ),
+        )
+      },
       unseenCount: (conn: ServerConnection.Any, project: LocalProject) => {
         const state = notification.ensureServerState(ServerConnection.key(conn))
         return directories(project).reduce((total, directory) => total + state.project.unseenCount(directory), 0)
@@ -123,6 +133,30 @@ export function createHomeProjectsController(home: HomeController) {
       help: () => platform.openExternal("https://opencode.ai/desktop-feedback"),
     },
   }
+}
+
+async function writeClipboard(value: string) {
+  const body = typeof document === "undefined" ? undefined : document.body
+  if (body) {
+    const textarea = document.createElement("textarea")
+    textarea.value = value
+    textarea.setAttribute("readonly", "")
+    textarea.style.position = "fixed"
+    textarea.style.opacity = "0"
+    textarea.style.pointerEvents = "none"
+    body.appendChild(textarea)
+    textarea.select()
+    const copied = document.execCommand("copy")
+    body.removeChild(textarea)
+    if (copied) return true
+  }
+
+  const clipboard = typeof navigator === "undefined" ? undefined : navigator.clipboard
+  if (!clipboard?.writeText) return false
+  return clipboard.writeText(value).then(
+    () => true,
+    () => false,
+  )
 }
 
 export type HomeProjectsController = ReturnType<typeof createHomeProjectsController>

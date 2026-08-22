@@ -688,6 +688,7 @@ export const dict = {
   "home.title": "Domov",
   "home.projects": "Projekti",
   "home.project.add": "Dodajte projekt",
+  "home.project.copyPath": "Kopiraj pot projekta",
   "home.recentlyClosed": "Pred kratkim zaprto",
   "home.server.collapse": "Strni strežniške projekte",
   "home.server.expand": "Razširite strežniške projekte",

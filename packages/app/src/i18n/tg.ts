@@ -689,6 +689,7 @@ export const dict = {
   "home.title": "Хона",
   "home.projects": "Лоиҳаҳо",
   "home.project.add": "Илова кардани лоиҳа",
+  "home.project.copyPath": "Роҳи лоиҳаро нусхабардорӣ кун",
   "home.recentlyClosed": "Ба наздикӣ баста",
   "home.server.collapse": "Лоиҳаҳои серверро вайрон кунед",
   "home.server.expand": "Лоиҳаҳои серверро васеъ кунед",

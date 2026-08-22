@@ -698,6 +698,7 @@ export const dict = {
   "home.title": "މައި ޞަފްޙާ",
   "home.projects": "މަޝްރޫއުތައް",
   "home.project.add": "ޕްރޮޖެކްޓް އިތުރުކުރުން",
+  "home.project.copyPath": "ޕްރޮޖެކްޓް މަގު ކޮޕީކުރުން",
   "home.recentlyClosed": "ދާދިފަހުން ބަންދުކުރިއެވެ",
   "home.server.collapse": "ސަރވަރ ޕްރޮޖެކްޓްތައް ކޮލަޕްސް ކުރުން",
   "home.server.expand": "ސަރވަރ ޕްރޮޖެކްޓްތައް ފުޅާކުރުން",

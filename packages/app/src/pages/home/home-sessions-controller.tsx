@@ -13,6 +13,7 @@ import {
 } from "@/context/global-sync/home-session-index"
 import type { LocalProject } from "@/context/layout"
 import { useLanguage } from "@/context/language"
+import { usePlatform } from "@/context/platform"
 import { ServerConnection } from "@/context/server"
 import { sessionHasOpenTab, useTabs } from "@/context/tabs"
 import { compareSessionTime, displayName, errorMessage, projectForSession } from "@/pages/layout/helpers"
@@ -43,6 +44,7 @@ export function createHomeSessionsController(home: HomeController) {
   const command = useCommand()
   const dialog = useDialog()
   const language = useLanguage()
+  const platform = usePlatform()
   const projectDirectories = createMemo(() => {
     const project = home.project.selected()
     if (!project) return home.project.list().flatMap(directories)
@@ -174,7 +176,7 @@ export function createHomeSessionsController(home: HomeController) {
       searchRecords: allRecords,
     },
     session: {
-      showProjectName: () => !home.project.selected(),
+      showProjectName: () => platform.platform !== "ios" && !home.project.selected(),
       server: () => home.selection.value().server,
       canCreate: () => !!home.project.newSession(),
       create: home.project.openNewSession,

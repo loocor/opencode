@@ -683,6 +683,7 @@ export const dict = {
   "home.title": "Avaleht",
   "home.projects": "Projektid",
   "home.project.add": "Lisa projekt",
+  "home.project.copyPath": "Kopeeri projekti tee",
   "home.recentlyClosed": "Hiljuti suletud",
   "home.server.collapse": "Ahenda serveriprojektid",
   "home.server.expand": "Laiendage serveriprojekte",

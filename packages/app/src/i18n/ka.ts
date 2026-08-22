@@ -687,6 +687,7 @@ export const dict = {
   "home.title": "მთავარი",
   "home.projects": "პროექტები",
   "home.project.add": "პროექტის დამატება",
+  "home.project.copyPath": "პროექტის ბილიკის კოპირება",
   "home.recentlyClosed": "ახლახან დაიხურა",
   "home.server.collapse": "სერვერის პროექტების ჩაკეცვა",
   "home.server.expand": "სერვერის პროექტების გაფართოება",

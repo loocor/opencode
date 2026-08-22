@@ -690,6 +690,7 @@ export const dict = {
   "home.title": "Heim",
   "home.projects": "Verkefni",
   "home.project.add": "Bæta við verkefni",
+  "home.project.copyPath": "Afrita slóð verkefnis",
   "home.recentlyClosed": "Nýlega lokað",
   "home.server.collapse": "Dragðu saman netþjónaverkefni",
   "home.server.expand": "Stækkaðu netþjónaverkefni",

@@ -674,6 +674,7 @@ export const dict = {
   "home.title": "الرئيسية",
   "home.projects": "المشاريع",
   "home.project.add": "إضافة مشروع",
+  "home.project.copyPath": "نسخ مسار المشروع",
   "home.recentlyClosed": "المغلقة مؤخرًا",
   "home.server.collapse": "طي مشاريع الخادم",
   "home.server.expand": "توسيع مشاريع الخادم",

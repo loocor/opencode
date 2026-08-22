@@ -685,6 +685,7 @@ export const dict = {
   "home.title": "ទំព័រដើម",
   "home.projects": "គម្រោង",
   "home.project.add": "បន្ថែមគម្រោង",
+  "home.project.copyPath": "ចម្លងផ្លូវគម្រោង",
   "home.recentlyClosed": "ថ្មីៗនេះបានបិទ",
   "home.server.collapse": "បង្រួមគម្រោងម៉ាស៊ីនមេ",
   "home.server.expand": "ពង្រីកគម្រោងម៉ាស៊ីនមេ",

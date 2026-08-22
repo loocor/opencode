@@ -603,6 +603,7 @@ export const dict = {
   "home.title": "Home",
   "home.projects": "Progetti",
   "home.project.add": "Aggiungi progetto",
+  "home.project.copyPath": "Copia percorso del progetto",
   "home.recentlyClosed": "Chiusi di recente",
   "home.server.collapse": "Comprimi progetti server",
   "home.server.expand": "Espandi i progetti server",

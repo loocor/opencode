@@ -687,6 +687,7 @@ export const dict = {
   "home.title": "Baş sahypa",
   "home.projects": "Taslamalar",
   "home.project.add": "Taslama goşuň",
+  "home.project.copyPath": "Taslama ýoluny göçür",
   "home.recentlyClosed": "Recentlyakynda ýapyldy",
   "home.server.collapse": "Serwer taslamalaryny ýykyň",
   "home.server.expand": "Serwer taslamalaryny giňeltmek",

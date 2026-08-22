@@ -690,6 +690,7 @@ export const dict = {
   "home.title": "Bosh sahifa",
   "home.projects": "Loyihalar",
   "home.project.add": "Loyiha qo'shish",
+  "home.project.copyPath": "Loyiha yo‘lini nusxalash",
   "home.recentlyClosed": "Yaqinda yopildi",
   "home.server.collapse": "Server loyihalarini yig'ish",
   "home.server.expand": "Server loyihalarini kengaytirish",

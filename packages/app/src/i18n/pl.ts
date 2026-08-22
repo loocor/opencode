@@ -680,6 +680,7 @@ export const dict = {
   "home.title": "Strona główna",
   "home.projects": "Projekty",
   "home.project.add": "Dodaj projekt",
+  "home.project.copyPath": "Kopiuj ścieżkę projektu",
   "home.recentlyClosed": "Ostatnio zamknięte",
   "home.server.collapse": "Zwiń projekty serwera",
   "home.server.expand": "Rozwiń projekty serwera",

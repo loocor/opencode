@@ -691,6 +691,7 @@ export const dict = {
   "home.title": "Տուն",
   "home.projects": "Նախագծեր",
   "home.project.add": "Ավելացնել նախագիծ",
+  "home.project.copyPath": "Պատճենել նախագծի ուղին",
   "home.recentlyClosed": "Վերջերս փակված",
   "home.server.collapse": "Փլուզել սերվերի նախագծերը",
   "home.server.expand": "Ընդլայնել սերվերի նախագծերը",

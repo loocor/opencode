@@ -693,6 +693,7 @@ export const dict = {
   "home.title": "Αρχική",
   "home.projects": "Έργα",
   "home.project.add": "Προσθήκη έργου",
+  "home.project.copyPath": "Αντιγραφή διαδρομής έργου",
   "home.recentlyClosed": "Πρόσφατα έκλεισε",
   "home.server.collapse": "Σύμπτυξη έργων διακομιστή",
   "home.server.expand": "Ανάπτυξη έργων διακομιστή",

@@ -4,13 +4,19 @@
 @import "tw-animate-css";
 
 html[data-platform="ios"] {
-  --font-size-small: 15px;
+  --font-size-small: 13px;
   --font-size-base: 15px;
   --font-size-large: 17px;
   --font-size-x-large: 21px;
   font-size: 15px;
+  height: 100%;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+}
+
+html[data-platform="ios"] body,
+html[data-platform="ios"] #root {
+  height: 100%;
 }
 
 html[data-platform="ios"] body,
@@ -21,10 +27,6 @@ html[data-platform="ios"] body * {
 
 html[data-platform="ios"] body,
 html[data-platform="ios"] body.text-\[13px\] {
-  font-size: 15px !important;
-}
-
-html[data-platform="ios"] .text-\[13px\] {
   font-size: 15px !important;
 }
 
@@ -49,13 +51,16 @@ html[data-platform="ios"] :is(
   [data-slot="basic-tool-v2-subtitle"],
   [data-slot="basic-tool-v2-arg"],
   [data-component="reasoning-part"] [data-component="markdown"],
-  [data-component="home-session-row"],
-  [data-component="home-session-row"] *,
-  [data-component="home-session-search"] input,
-  [data-component="home-project-row"],
-  [data-component="home-project-row"] *
+  [data-component="home-session-search"] input
 ) {
   font-size: 15px;
+}
+
+html[data-platform="ios"] [data-component="home-session-row"],
+html[data-platform="ios"] [data-component="home-session-row"] *,
+html[data-platform="ios"] [data-component="home-project-row"],
+html[data-platform="ios"] [data-component="home-project-row"] * {
+  font-size: 14px !important;
 }
 
 html[data-platform="ios"] [data-slot="titlebar-v2"],

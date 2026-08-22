@@ -755,6 +755,7 @@ export const dict = {
   "home.title": "Головна",
   "home.projects": "Проєкти",
   "home.project.add": "Додати проєкт",
+  "home.project.copyPath": "Копіювати шлях проєкту",
   "home.recentlyClosed": "Нещодавно закриті",
   "home.server.collapse": "Згорнути проєкти сервера",
   "home.server.expand": "Розгорнути проєкти сервера",

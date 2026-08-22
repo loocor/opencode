@@ -685,6 +685,7 @@ export const dict = {
   "home.title": "Laman Utama",
   "home.projects": "Projek",
   "home.project.add": "Tambah projek",
+  "home.project.copyPath": "Salin laluan projek",
   "home.recentlyClosed": "Baru ditutup",
   "home.server.collapse": "Runtuhkan projek pelayan",
   "home.server.expand": "Kembangkan projek pelayan",

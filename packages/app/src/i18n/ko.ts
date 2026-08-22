@@ -980,6 +980,7 @@ export const dict = {
   "home.title": "홈",
   "home.projects": "프로젝트",
   "home.project.add": "프로젝트 추가",
+  "home.project.copyPath": "프로젝트 경로 복사",
   "home.recentlyClosed": "최근에 닫은 항목",
   "home.server.collapse": "서버 프로젝트 접기",
   "home.server.expand": "서버 프로젝트 펼치기",

@@ -692,6 +692,7 @@ export const dict = {
   "home.title": "Hem",
   "home.projects": "Projekt",
   "home.project.add": "Lägg till projekt",
+  "home.project.copyPath": "Kopiera projektsökväg",
   "home.recentlyClosed": "Nyligen stängda",
   "home.server.collapse": "Fäll ihop serverprojekt",
   "home.server.expand": "Fäll ut serverprojekt",

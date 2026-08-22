@@ -687,6 +687,7 @@ export const dict = {
   "home.title": "Acasă",
   "home.projects": "Proiecte",
   "home.project.add": "Adaugă proiect",
+  "home.project.copyPath": "Copiază calea proiectului",
   "home.recentlyClosed": "Închise recent",
   "home.server.collapse": "Restrânge proiectele serverului",
   "home.server.expand": "Extinde proiectele serverului",

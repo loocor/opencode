@@ -53,6 +53,7 @@ export type HomeProjectsViewProps = {
   onAddProjects: (server: ServerConnection.Any, directories: string[]) => void
   onOpenProjectNewSession: (server: ServerConnection.Any, directory: string) => void
   onEditProject: (server: ServerConnection.Any, project: LocalProject) => void
+  onCopyProjectPath: (project: LocalProject) => void
   onRevealProject: (server: ServerConnection.Any, project: LocalProject) => void
   onClearNotifications: (server: ServerConnection.Any, project: LocalProject) => void
   onCloseProject: (server: ServerConnection.Any, directory: string) => void
@@ -554,6 +555,9 @@ function HomeProjectRow(
               </MenuV2.Item>
               <MenuV2.Item onSelect={() => props.onEditProject(props.server, props.project)}>
                 {props.language.t("dialog.project.edit.title")}
+              </MenuV2.Item>
+              <MenuV2.Item onSelect={() => props.onCopyProjectPath(props.project)}>
+                {props.language.t("home.project.copyPath")}
               </MenuV2.Item>
               <Show when={props.canRevealProject(props.server)}>
                 <MenuV2.Item onSelect={() => props.onRevealProject(props.server, props.project)}>

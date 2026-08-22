@@ -692,6 +692,7 @@ export const dict = {
   "home.title": "Inici",
   "home.projects": "Projectes",
   "home.project.add": "Afegeix projecte",
+  "home.project.copyPath": "Copia el camí del projecte",
   "home.recentlyClosed": "Tancat recentment",
   "home.server.collapse": "Col·lapse els projectes del servidor",
   "home.server.expand": "Ampliar els projectes del servidor",

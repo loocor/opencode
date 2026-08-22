@@ -1192,6 +1192,7 @@ export const dict = {
   "home.title": "Hjem",
   "home.projects": "Prosjekter",
   "home.project.add": "Legg til prosjekt",
+  "home.project.copyPath": "Kopier prosjektbane",
   "home.recentlyClosed": "Nylig lukket",
   "home.server.collapse": "Fold sammen serverprosjekter",
   "home.server.expand": "Utvid serverprosjekter",

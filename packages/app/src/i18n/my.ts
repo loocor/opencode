@@ -694,6 +694,7 @@ export const dict = {
   "home.title": "ပင်မ",
   "home.projects": "ပရောဂျက်များ",
   "home.project.add": "ပရောဂျက်ကို ထည့်ပါ။",
+  "home.project.copyPath": "ပရောဂျက်လမ်းကြောင်းကို ကူးယူပါ",
   "home.recentlyClosed": "မကြာသေးမီက ပိတ်ထားသည်။",
   "home.server.collapse": "ဆာဗာပရောဂျက်များကို ခေါက်သိမ်းပါ။",
   "home.server.expand": "ဆာဗာ ပရောဂျက်များကို ချဲ့ထွင်ပါ။",

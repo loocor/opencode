@@ -677,6 +677,7 @@ export const dict = {
   "home.title": "ホーム",
   "home.projects": "プロジェクト",
   "home.project.add": "プロジェクトを追加",
+  "home.project.copyPath": "プロジェクトパスをコピー",
   "home.recentlyClosed": "最近閉じたプロジェクト",
   "home.server.collapse": "サーバーのプロジェクトを折りたたむ",
   "home.server.expand": "サーバーのプロジェクトを展開",

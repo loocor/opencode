@@ -2026,56 +2026,50 @@ export default function Page() {
 
   useUsageExceededDialogs()
 
-  const mobileTabs = (compact = false, bottom = false) => (
-    <Tabs value={mobileTab()} class="h-auto">
-      <Tabs.List
-        classList={{
-          "!h-9": compact,
-          "[&::after]:!border-b-0 [&::after]:!border-t [&::after]:!border-border-weak-base": bottom,
-        }}
-      >
-        <Tabs.Trigger
-          value="session"
+  const mobileTabs = (compact = false, bottom = false) => {
+    const tabClass = {
+      "!max-w-none min-w-0 !flex-auto": true,
+      "!border-b-0 !border-t !border-border-weak-base [&:has([data-selected])]:!border-t-transparent": bottom,
+    }
+    const buttonClass = compact ? "!w-full !min-w-0 !overflow-hidden !py-2" : "!w-full !min-w-0 !overflow-hidden"
+    return (
+      <Tabs value={mobileTab()} class="h-auto">
+        <Tabs.List
           classList={{
-            "!max-w-none": true,
-            "!w-1/2": activeTab() !== "context",
-            "!w-1/3": activeTab() === "context",
-            "!border-b-0 !border-t !border-border-weak-base [&:has([data-selected])]:!border-t-transparent": bottom,
+            "w-full flex-nowrap overflow-hidden [&::after]:hidden": true,
+            "!h-9": compact,
           }}
-          classes={{ button: compact ? "w-full !py-2" : "w-full" }}
-          onClick={() => setMobileTab("session")}
         >
-          {language.t("session.tab.session")}
-        </Tabs.Trigger>
-        <Tabs.Trigger
-          value="context"
-          classList={{
-            "!w-1/3 !max-w-none": true,
-            "!border-b-0 !border-t !border-border-weak-base [&:has([data-selected])]:!border-t-transparent": bottom,
-          }}
-          classes={{ button: compact ? "w-full !py-2" : "w-full" }}
-          onClick={() => setMobileTab("context")}
-        >
-          {language.t("session.tab.context")}
-        </Tabs.Trigger>
-        <Tabs.Trigger
-          value="changes"
-          classList={{
-            "!max-w-none !border-r-0": true,
-            "!w-1/2": activeTab() !== "context",
-            "!w-1/3": activeTab() === "context",
-            "!border-b-0 !border-t !border-border-weak-base [&:has([data-selected])]:!border-t-transparent": bottom,
-          }}
-          classes={{ button: compact ? "w-full !py-2" : "w-full" }}
-          onClick={() => setMobileTab("changes")}
-        >
-          {hasReview()
-            ? language.t("session.review.filesChanged", { count: reviewCount() })
-            : language.t("session.review.change.other")}
-        </Tabs.Trigger>
-      </Tabs.List>
-    </Tabs>
-  )
+          <Tabs.Trigger
+            value="session"
+            classList={tabClass}
+            classes={{ button: buttonClass }}
+            onClick={() => setMobileTab("session")}
+          >
+            {language.t("session.tab.session")}
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="context"
+            classList={tabClass}
+            classes={{ button: buttonClass }}
+            onClick={() => setMobileTab("context")}
+          >
+            {language.t("session.tab.context")}
+          </Tabs.Trigger>
+          <Tabs.Trigger
+            value="changes"
+            classList={{ ...tabClass, "!border-r-0": true }}
+            classes={{ button: buttonClass }}
+            onClick={() => setMobileTab("changes")}
+          >
+            {hasReview()
+              ? language.t("session.review.filesChanged", { count: reviewCount() })
+              : language.t("session.review.change.other")}
+          </Tabs.Trigger>
+        </Tabs.List>
+      </Tabs>
+    )
+  }
   const mobileTabsBottom = createMemo(
     () => !isDesktop() && settings.general.newLayoutDesigns() && settings.general.mobileTitlebarPosition() === "bottom",
   )

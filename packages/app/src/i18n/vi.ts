@@ -697,6 +697,7 @@ export const dict = {
   "home.title": "Trang chủ",
   "home.projects": "Dự án",
   "home.project.add": "Thêm dự án",
+  "home.project.copyPath": "Sao chép đường dẫn dự án",
   "home.recentlyClosed": "Đã đóng gần đây",
   "home.server.collapse": "Thu gọn các dự án máy chủ",
   "home.server.expand": "Mở rộng dự án máy chủ",

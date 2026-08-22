@@ -688,6 +688,7 @@ export const dict = {
   "home.title": "Sākums",
   "home.projects": "Projekti",
   "home.project.add": "Pievienot projektu",
+  "home.project.copyPath": "Kopēt projekta ceļu",
   "home.recentlyClosed": "Nesen aizvērti",
   "home.server.collapse": "Sakļaut servera projektus",
   "home.server.expand": "Izvērst servera projektus",

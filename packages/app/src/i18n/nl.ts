@@ -694,6 +694,7 @@ export const dict = {
   "home.title": "Start",
   "home.projects": "Projecten",
   "home.project.add": "Project toevoegen",
+  "home.project.copyPath": "Projectpad kopiëren",
   "home.recentlyClosed": "Onlangs gesloten",
   "home.server.collapse": "Serverprojecten samenvouwen",
   "home.server.expand": "Serverprojecten uitvouwen",

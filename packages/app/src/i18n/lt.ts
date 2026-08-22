@@ -693,6 +693,7 @@ export const dict = {
   "home.title": "Pagrindinis",
   "home.projects": "Projektai",
   "home.project.add": "Pridėti projektą",
+  "home.project.copyPath": "Kopijuoti projekto kelią",
   "home.recentlyClosed": "Neseniai uždaryta",
   "home.server.collapse": "Sutraukti serverio projektus",
   "home.server.expand": "Išplėsti serverio projektus",
