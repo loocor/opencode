@@ -164,6 +164,19 @@ export function resumeStreamAfterPageShow(event: PageTransitionEvent, start: () 
   start()
 }
 
+export const RECONNECT_MIN_MS = 1_000
+export const RECONNECT_MAX_MS = 30_000
+export const STREAM_CONNECT_MS = 8_000
+
+export function nextReconnectDelay(current: number) {
+  if (current < RECONNECT_MIN_MS) return RECONNECT_MIN_MS
+  return Math.min(current * 2, RECONNECT_MAX_MS)
+}
+
+function pageHidden() {
+  return typeof document !== "undefined" && document.visibilityState === "hidden"
+}
+
 type ServerEventEmitter = ReturnType<typeof createGlobalEmitter<{ [key: string]: ServerEvent }>>
 type ServerSDKBase = {
   server: ServerConnection.Any
@@ -178,6 +191,7 @@ type ServerSDKBase = {
     on: ServerEventEmitter["on"]
     listen: ServerEventEmitter["listen"]
     start: () => Promise<void> | undefined
+    stop: () => void
   }
   createClient: (
     opts: Omit<Parameters<typeof createSdkForServer>[0], "server" | "fetch">,
@@ -217,7 +231,6 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
   type Queued = QueuedServerEvent
   const FLUSH_FRAME_MS = 16
   const STREAM_YIELD_MS = 8
-  const RECONNECT_DELAY_MS = 250
 
   let queue: Queued[] = []
   let buffer: Queued[] = []
@@ -258,19 +271,25 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
   let generation = 0
 
   const start = () => {
-    if (started) return run
+    if (started || pageHidden()) return run
     started = true
     const active = ++generation
     const previous = run
     const current = (async () => {
       if (previous) await previous
       // oxlint-disable-next-line no-unmodified-loop-condition -- `started` is set to false by stop() which also aborts; both flags are checked to allow graceful exit
+      let delay = RECONNECT_MIN_MS
       while (!abort.signal.aborted && started && generation === active) {
+        if (pageHidden()) {
+          stop()
+          return
+        }
         attempt = new AbortController()
         const onAbort = () => {
           attempt?.abort()
         }
         abort.signal.addEventListener("abort", onAbort)
+        const connect = setTimeout(() => attempt?.abort(), STREAM_CONNECT_MS)
         try {
           const kind = await protocol
           const events =
@@ -278,7 +297,13 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
               ? (await eventSdk.global.event({ signal: attempt.signal })).stream
               : eventApi.event.subscribe({ signal: attempt.signal })
           let yielded = Date.now()
+          let open = false
           for await (const event of events) {
+            if (!open) {
+              open = true
+              delay = RECONNECT_MIN_MS
+              clearTimeout(connect)
+            }
             streamErrorLogged = false
             const legacy = "payload" in event
             if (legacy && event.payload.type === "sync") continue
@@ -300,12 +325,18 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
             })
           }
         } finally {
+          clearTimeout(connect)
           abort.signal.removeEventListener("abort", onAbort)
           attempt = undefined
         }
 
         if (abort.signal.aborted || !started || generation !== active) return
-        await wait(RECONNECT_DELAY_MS)
+        if (pageHidden()) {
+          stop()
+          return
+        }
+        await wait(delay)
+        delay = nextReconnectDelay(delay)
       }
     })().finally(() => {
       if (run !== current) return
@@ -323,8 +354,19 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
   }
 
   onMount(() => {
-    makeEventListener(window, "pagehide", stop)
-    makeEventListener(window, "pageshow", (event) => resumeStreamAfterPageShow(event, start))
+    const pause = () => stop()
+    const resume = () => {
+      if (pageHidden()) return
+      start()
+    }
+    makeEventListener(window, "pagehide", pause)
+    makeEventListener(window, "pageshow", (event) => resumeStreamAfterPageShow(event, resume))
+    makeEventListener(window, "opencode:pause", pause)
+    makeEventListener(window, "opencode:resume", resume)
+    makeEventListener(document, "visibilitychange", () => {
+      if (pageHidden()) pause()
+      else resume()
+    })
   })
 
   onCleanup(() => {
@@ -361,6 +403,7 @@ function createServerSdkContextBase(server: ServerConnection.Any, scope: ServerS
       on: emitter.on.bind(emitter),
       listen: emitter.listen.bind(emitter),
       start,
+      stop,
     },
     createClient(opts: Omit<Parameters<typeof createSdkForServer>[0], "server" | "fetch">) {
       return createSdkForServer({

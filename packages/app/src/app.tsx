@@ -514,8 +514,16 @@ function ConnectionError(props: {
 
   createEffect(() => {
     if (!autoRetry()) return
-    const timer = setInterval(() => props.onRetry?.(), 1000)
-    onCleanup(() => clearInterval(timer))
+    const delays = [2000, 4000, 8000, 16000, 30000]
+    let step = 0
+    let timer: ReturnType<typeof setTimeout>
+    const tick = () => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") props.onRetry?.()
+      step = Math.min(step + 1, delays.length - 1)
+      timer = setTimeout(tick, delays[step])
+    }
+    timer = setTimeout(tick, delays[0])
+    onCleanup(() => clearTimeout(timer))
   })
 
   return (

@@ -209,6 +209,10 @@ const App = () => {
           : typeof payload === "object" && payload
             ? (payload as { state?: unknown }).state
             : undefined
+      if (state === "background") {
+        window.dispatchEvent(new Event("opencode:pause"))
+        return
+      }
       if (state !== "active") return
       emitResume()
     })

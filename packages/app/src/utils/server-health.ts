@@ -2,7 +2,8 @@ import { usePlatform } from "@/context/platform"
 import { ServerConnection } from "@/context/server"
 import { authTokenFromCredentials, createSdkForServer } from "./server"
 import { ClientError, OpenCode } from "@opencode-ai/client"
-import { Accessor, createEffect, onCleanup } from "solid-js"
+import { makeEventListener } from "@solid-primitives/event-listener"
+import { Accessor, createEffect, createSignal, onCleanup } from "solid-js"
 import { createStore, reconcile } from "solid-js/store"
 
 export type ServerHealth = { healthy: boolean; version?: string }
@@ -112,7 +113,7 @@ export async function checkServerHealth(
   return attempt(0).finally(() => timeout?.clear?.())
 }
 
-const pollMs = 10_000
+const pollMs = 30_000
 
 export function useCheckServerHealth() {
   const platform = usePlatform()
@@ -137,12 +138,19 @@ export function useCheckServerHealth() {
 export const useServerHealth = (servers: Accessor<ServerConnection.Any[]>, enabled: Accessor<boolean>) => {
   const checkServerHealth = useCheckServerHealth()
   const [status, setStatus] = createStore({} as Record<ServerConnection.Key, ServerHealth | undefined>)
+  const [visible, setVisible] = createSignal(typeof document === "undefined" || document.visibilityState === "visible")
+  if (typeof document !== "undefined") {
+    makeEventListener(document, "visibilitychange", () => {
+      setVisible(document.visibilityState === "visible")
+    })
+  }
 
   createEffect(() => {
     if (!enabled()) {
       setStatus(reconcile({}))
       return
     }
+    if (!visible()) return
     const list = servers()
     let dead = false
 

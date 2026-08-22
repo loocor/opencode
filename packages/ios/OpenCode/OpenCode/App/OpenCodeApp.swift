@@ -11,12 +11,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     UNUserNotificationCenter.current().delegate = self
-    application.beginReceivingRemoteControlEvents()
     return true
-  }
-
-  func applicationWillTerminate(_ application: UIApplication) {
-    application.endReceivingRemoteControlEvents()
   }
 
   func applicationDidBecomeActive(_ application: UIApplication) {

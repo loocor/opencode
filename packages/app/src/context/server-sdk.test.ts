@@ -1,5 +1,13 @@
 import { describe, expect, test } from "bun:test"
-import { adaptServerEvent, coalesceServerEvents, enqueueServerEvent, resumeStreamAfterPageShow } from "./server-sdk"
+import {
+  adaptServerEvent,
+  coalesceServerEvents,
+  enqueueServerEvent,
+  nextReconnectDelay,
+  RECONNECT_MAX_MS,
+  RECONNECT_MIN_MS,
+  resumeStreamAfterPageShow,
+} from "./server-sdk"
 import type { OpenCodeEvent } from "@opencode-ai/client/promise"
 import type { Event } from "@opencode-ai/sdk/v2/client"
 
@@ -12,6 +20,15 @@ describe("resumeStreamAfterPageShow", () => {
     resumeStreamAfterPageShow({ persisted: true } as PageTransitionEvent, start)
 
     expect(starts).toBe(1)
+  })
+})
+
+describe("nextReconnectDelay", () => {
+  test("starts at the minimum delay and caps at the maximum", () => {
+    expect(nextReconnectDelay(0)).toBe(RECONNECT_MIN_MS)
+    expect(nextReconnectDelay(RECONNECT_MIN_MS)).toBe(2_000)
+    expect(nextReconnectDelay(16_000)).toBe(RECONNECT_MAX_MS)
+    expect(nextReconnectDelay(RECONNECT_MAX_MS)).toBe(RECONNECT_MAX_MS)
   })
 })
 

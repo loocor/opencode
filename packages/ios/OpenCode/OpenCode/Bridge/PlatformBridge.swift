@@ -25,7 +25,6 @@ final class PlatformBridge: NSObject, AVSpeechSynthesizerDelegate {
   override init() {
     super.init()
     speech.delegate = self
-    configureAudio()
     configureRemoteCommands()
     activeObserver = NotificationCenter.default.addObserver(
       forName: UIApplication.didBecomeActiveNotification,
@@ -308,20 +307,17 @@ final class PlatformBridge: NSObject, AVSpeechSynthesizerDelegate {
     return true
   }
 
-  private func configureAudio() {
-    do {
-      let session = AVAudioSession.sharedInstance()
-      try session.setCategory(.playback, mode: .default, options: [])
-    } catch {
-      print("[OpenCode] Audio session setup failed: \(error.localizedDescription)")
-    }
-  }
-
   private func setAudio(active: Bool) {
     do {
       let session = AVAudioSession.sharedInstance()
-      let options: AVAudioSession.SetActiveOptions = active ? [] : .notifyOthersOnDeactivation
-      try session.setActive(active, options: options)
+      if active {
+        try session.setCategory(.playback, mode: .default, options: [])
+        try session.setActive(true)
+        UIApplication.shared.beginReceivingRemoteControlEvents()
+        return
+      }
+      try session.setActive(false, options: .notifyOthersOnDeactivation)
+      UIApplication.shared.endReceivingRemoteControlEvents()
     } catch {
       print("[OpenCode] Audio session activation failed: \(error.localizedDescription)")
     }
