@@ -72,7 +72,7 @@ export function SessionFollowupDock(props: {
       </Show>
 
       <Show when={!store.collapsed}>
-        <div class="px-3 pb-7 flex flex-col gap-1.5 max-h-42 overflow-y-auto no-scrollbar">
+        <div class="px-3 pb-7 flex flex-col gap-1.5 max-h-[var(--session-dock-list-max,10.5rem)] overflow-y-auto no-scrollbar">
           <For each={props.items}>
             {(item) => (
               <div class="flex items-center gap-2 min-w-0 py-1">

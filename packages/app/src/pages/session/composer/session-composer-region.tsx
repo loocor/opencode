@@ -1,4 +1,4 @@
-import { Show, type JSX } from "solid-js"
+import { Show, onCleanup, type JSX } from "solid-js"
 import { useLanguage } from "@/context/language"
 import { useSettings } from "@/context/settings"
 import { SessionPermissionDock } from "@/pages/session/composer/session-permission-dock"
@@ -6,11 +6,14 @@ import { SessionQuestionDock } from "@/pages/session/composer/session-question-d
 import { SessionFollowupDock } from "@/pages/session/composer/session-followup-dock"
 import { SessionRevertDock } from "@/pages/session/composer/session-revert-dock"
 import { SessionTodoDock } from "@/pages/session/composer/session-todo-dock"
+import { bindSessionDockBudget } from "./session-dock-budget"
 import type { SessionComposerRegionController } from "./session-composer-region-controller"
+import "./session-dock.css"
 
 export function SessionComposerRegion(props: {
   controller: SessionComposerRegionController
   promptInput: JSX.Element
+  hidePrompt?: boolean
 }) {
   const language = useLanguage()
   const controller = props.controller
@@ -19,11 +22,23 @@ export function SessionComposerRegion(props: {
     const revert = controller.revert()
     return revert?.items.length ? revert : undefined
   }
+  const requests = () => controller.state.questionRequest() || controller.state.permissionRequest()
+  let dock: HTMLDivElement | undefined
+  let unbindDock: (() => void) | undefined
+
+  onCleanup(() => unbindDock?.())
 
   return (
-    <div
-      ref={controller.setDockRef}
-      data-component="session-prompt-dock"
+    <Show when={!props.hidePrompt || requests()}>
+      <div
+        ref={(el) => {
+          unbindDock?.()
+          unbindDock = undefined
+          dock = el
+          controller.setDockRef(el)
+          if (el) unbindDock = bindSessionDockBudget(el)
+        }}
+        data-component="session-prompt-dock"
       classList={{
         "w-full shrink-0 flex flex-col justify-center items-center pb-3 pointer-events-none": true,
         "bg-v2-background-bg-base": settings.general.newLayoutDesigns(),
@@ -59,7 +74,7 @@ export function SessionComposerRegion(props: {
           )}
         </Show>
 
-        <Show when={controller.showComposer()}>
+        <Show when={!props.hidePrompt && controller.showComposer()}>
           <Show when={controller.dock()}>
             <div
               classList={{
@@ -163,6 +178,7 @@ export function SessionComposerRegion(props: {
           </Show>
         </Show>
       </div>
-    </div>
+      </div>
+    </Show>
   )
 }

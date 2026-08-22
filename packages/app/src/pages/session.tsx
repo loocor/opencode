@@ -2160,7 +2160,7 @@ export default function Page() {
         </Switch>
       </div>
 
-      <Show when={(params.id || !newSessionDesign()) && !mobileChanges() && !mobileContext()}>
+      <Show when={params.id || !newSessionDesign()}>
         {(_) => {
           const controller = createSessionComposerRegionController({
             state: composer,
@@ -2211,6 +2211,7 @@ export default function Page() {
           return (
             <SessionComposerRegion
               controller={controller}
+              hidePrompt={mobileChanges() || mobileContext()}
               promptInput={
                 <Show
                   when={newSessionDesign()}

@@ -1,0 +1,15 @@
+[data-component="session-prompt-dock"] {
+  --session-dock-max-height: 52dvh;
+  --session-dock-list-max: 36dvh;
+}
+
+[data-component="session-todo-dock"] {
+  max-height: var(--session-dock-max-height);
+}
+
+[data-component="session-todo-dock"] [data-slot="session-todo-list"] {
+  max-height: var(--session-dock-list-max);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}

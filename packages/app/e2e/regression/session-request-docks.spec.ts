@@ -165,6 +165,35 @@ test("restores the draft caret before typing after a request dock closes", async
   await expect(editor).toHaveText(`${draft.slice(0, cursor)}x${draft.slice(cursor)}`)
 })
 
+test("keeps request docks visible on a narrow session view", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mockServer(page, {
+    permissions: [
+      {
+        id: "permission-mobile",
+        sessionID,
+        permission: "bash",
+        patterns: ["git status"],
+        metadata: {},
+        always: [],
+      },
+    ],
+  })
+  await page.goto(`/${base64Encode(directory)}/session/${sessionID}`)
+  await page.evaluate(() => {
+    document.documentElement.dataset.platform = "ios"
+  })
+  await expectSessionTitle(page, title)
+
+  const permission = page.locator('[data-component="dock-prompt"][data-kind="permission"]')
+  await expect(permission).toBeVisible()
+  await expect(permission.getByRole("button", { name: "Allow once" })).toBeVisible()
+
+  await page.getByRole("tab", { name: "Changes" }).click()
+  await expect(permission).toBeVisible()
+  await expect(permission.getByRole("button", { name: "Allow once" })).toBeVisible()
+})
+
 async function mockServer(
   page: Page,
   requests: {

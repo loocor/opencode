@@ -9,7 +9,6 @@ import { showToast } from "@/utils/toast"
 import type { QuestionAnswer, QuestionRequest } from "@opencode-ai/sdk/v2"
 import { useLanguage } from "@/context/language"
 import { useSDK } from "@/context/sdk"
-import { makeEventListener } from "@solid-primitives/event-listener"
 import { createResizeObserver } from "@solid-primitives/resize-observer"
 import { useServerSDK } from "@/context/server-sdk"
 import { ScopedKey } from "@/utils/server-scope"
@@ -82,7 +81,6 @@ export const SessionQuestionDock: Component<{ request: QuestionRequest; onSubmit
     optionsHeight: 180,
   })
 
-  let root: HTMLDivElement | undefined
   let optionsRef: HTMLDivElement | undefined
   let customRef: HTMLButtonElement | undefined
   let optsRef: HTMLButtonElement[] = []
@@ -128,28 +126,6 @@ export const SessionQuestionDock: Component<{ request: QuestionRequest; onSubmit
     setStore("answers", store.tab, next ? [next] : [])
   }
 
-  const measure = () => {
-    if (!root) return
-
-    const scroller = document.querySelector(".scroll-view__viewport")
-    const head = scroller instanceof HTMLElement ? scroller.firstElementChild : undefined
-    const top =
-      head instanceof HTMLElement && head.classList.contains("sticky") ? head.getBoundingClientRect().bottom : 0
-    if (!top) {
-      root.style.removeProperty("--question-prompt-max-height")
-      return
-    }
-
-    const dock = root.closest('[data-component="session-prompt-dock"]')
-    if (!(dock instanceof HTMLElement)) return
-
-    const dockBottom = dock.getBoundingClientRect().bottom
-    const below = Math.max(0, dockBottom - root.getBoundingClientRect().bottom)
-    const gap = 8
-    const max = Math.max(240, Math.floor(dockBottom - top - gap - below))
-    root.style.setProperty("--question-prompt-max-height", `${max}px`)
-  }
-
   const clamp = (i: number) => Math.max(0, Math.min(count() - 1, i))
 
   const pickFocus = (tab: number = store.tab) => {
@@ -174,27 +150,6 @@ export const SessionQuestionDock: Component<{ request: QuestionRequest; onSubmit
   }
 
   onMount(() => {
-    let raf: number | undefined
-    const update = () => {
-      if (raf !== undefined) cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        raf = undefined
-        measure()
-      })
-    }
-
-    update()
-
-    makeEventListener(window, "resize", update)
-
-    const dock = root?.closest('[data-component="session-prompt-dock"]')
-    const scroller = document.querySelector(".scroll-view__viewport")
-    createResizeObserver([dock, scroller], update)
-
-    onCleanup(() => {
-      if (raf !== undefined) cancelAnimationFrame(raf)
-    })
-
     focus(pickFocus())
   })
 
@@ -455,7 +410,6 @@ export const SessionQuestionDock: Component<{ request: QuestionRequest; onSubmit
     <div data-component="session-question-dock">
       <DockPrompt
         kind="question"
-        ref={(el) => (root = el)}
         onKeyDown={nav}
         header={
           <>
